@@ -1,44 +1,64 @@
 PApplet main = this;
-PImage colorChooser, valueChooser;
+GWindow window;
 
-void setDialogue(int x){
-    if(x != 0){ //New File Window
-        nfWin.reset();
-    } else{
-        nfWin.window.setVisible(true);
+void setDialogue(int x) {
+    window.setVisible(false);
+    println("X:", x);
+    if (x != 0) { 
+        nfWin.cleanupWin();
+        println("Clean: New File");
     }
-    
-    if(x != 1){ //Create Text
-    
-    } else{
-    
+    if (x != 1) { 
+        cText.cleanupWin();
+        println("Clean: Text");
     }
-    
-    if(x != 2){ //Add Component
-    
-    } else{
-    
+    if (x != 2) { 
+        cComp.cleanupWin();
+        println("Clean: Comp");
     }
-    
-    if(x != 3){ //Edit Layer
-        lOptions.window.setVisible(false);
-    } else{
-        lOptions.window.setVisible(true);
+    if (x != 3) { 
+        lOptions.cleanupWin();
+        println("Clean: Layer Options");
     }
-    
-    if(x != 4){ //Delete Layer
-        dLayer.window.setVisible(false);
-    } else{
-        dLayer.window.setVisible(true);
+    if (x != 4) { 
+        dLayer.cleanupWin();
+        println("Clean: Delete Layer");
     }
+    if (x != 5) { 
+        ccD.getSurface().setVisible(false);
+        println("Clean: Colors");
+    }
+    if (x == -1) { 
+        window.setVisible(false); 
+        println("Clean: Full");
+        return;
+    }
+
     
-    if(x != 5){ //Choose Color
-        ccD.finish();
-    } else{
-        if(ccD.isRunning == false) ccD.run();
-        else ccD.getSurface().setVisible(true);
+
+    if (x == 0) { //New File Window
+        nfWin.setupWin();
+        println("New File");
+    } else if (x == 1) { //Create Text
+        cText.setupWin();
+        println("Text");
+    } else if (x == 2) { //Add Component
+        cComp.setupWin();
+        println("Comp");
+    } else if (x == 3) { //Edit Layer
+        lOptions.setupWin();
+        println("Edit Layer");
+    } else if (x == 4) { //Delete Layer
+        dLayer.setupWin();
+        println("Delete Layer");
+    } else if (x == 5) { //Choose Color
+        if (ccD.isRunning == false) ccD.run();
+        else ccD.setVisible(true);
         ccD.changeIndex = (height - 86 - mouseY + managerScrolled)/20;
+        return;
     }
+
+    window.setVisible(true);
 }
 
 //======================================================================================
@@ -46,7 +66,6 @@ void setDialogue(int x){
 //======================================================================================
 
 class newFileDialogue {
-    GWindow window;
     GTextField widthEntry, heightEntry, firstThickness;
     GLabel outline, fileName, unit;
     GButton startFile, create, cancel;
@@ -55,9 +74,6 @@ class newFileDialogue {
     File initFile;
 
     newFileDialogue() {
-        window = GWindow.getWindow(main, "New File", 0, 0, 300, 200, JAVA2D);
-        window.setActionOnClose(G4P.KEEP_OPEN);
-
         check = new GCheckbox(window, 5, 50, 120, 20);
         check.setIconAlign(GAlign.LEFT, GAlign.MIDDLE);
         check.setText("Start With Outline?");
@@ -95,20 +111,42 @@ class newFileDialogue {
         create.setText("Create");
         create.addEventHandler(main, "submitNF");
 
-        create = new GButton(window, 65, 170, 50, 20);
-        create.setText("Cancel");
-        create.addEventHandler(main, "cancelNF");
-
-        window.setVisible(false);
+        cancel = new GButton(window, 65, 170, 50, 20);
+        cancel.setText("Cancel");
+        cancel.addEventHandler(main, "cancelNF");
     }
 
-    void reset() {
+    void setupWin() {
+        window.getSurface().setSize(300, 200);
+        widthEntry.setVisible(true);
+        heightEntry.setVisible(true);
+        firstThickness.setVisible(true);
+        outline.setVisible(true);
+        fileName.setVisible(true);
+        unit.setVisible(true);
+        startFile.setVisible(true);
+        create.setVisible(true);
+        cancel.setVisible(true);
+        check.setVisible(true);
+    }
+
+    void cleanupWin() {
+        widthEntry.setVisible(false);
+        heightEntry.setVisible(false);
+        firstThickness.setVisible(false);
+        outline.setVisible(false);
+        fileName.setVisible(false);
+        unit.setVisible(false);
+        startFile.setVisible(false);
+        create.setVisible(false);
+        cancel.setVisible(false);
+        check.setVisible(false);
+
         widthEntry.setText("Width");
         heightEntry.setText("Height");
         check.setSelected(false);
         initFile = null;
         fileName.setText("No File Selected");
-        window.setVisible(false);
     }
 }
 
@@ -141,10 +179,12 @@ void submitNF(GButton b, GEvent e) {
         else
             makeNewFile();
     } else makeNewFile();
+    setDialogue(-1);
+    
 }
 
 void cancelNF(GButton b, GEvent e) {
-    nfWin.reset();
+    setDialogue(-1);
 }
 
 //======================================================================================
@@ -152,11 +192,13 @@ void cancelNF(GButton b, GEvent e) {
 //======================================================================================
 
 class createTextDialogue {
-    GWindow window;
     createTextDialogue() {
-        window = GWindow.getWindow(main, "Add Text", 0, 0, 400, 200, JAVA2D);
+    }
 
-        window.setVisible(false);
+    void setupWin() {
+    }
+
+    void cleanupWin() {
     }
 }
 
@@ -165,11 +207,13 @@ class createTextDialogue {
 //======================================================================================
 
 class chooseComponentDialogue {
-    GWindow window;
     chooseComponentDialogue() {
-        window = GWindow.getWindow(main, "Add Component", 0, 0, 400, 200, JAVA2D);
+    }
 
-        window.setVisible(false);
+    void setupWin() {
+    }
+
+    void cleanupWin() {
     }
 }
 
@@ -178,25 +222,65 @@ class chooseComponentDialogue {
 //======================================================================================
 
 class layerOptionsDialogue {
-    GWindow window;
     GCheckbox check;
-    GImageButton hsbc;
-    GImageButton vc;
-    File initFile;
-
-    int s = 100;
+    GTextField name;
+    GButton accept, cancel;
+    int changeIndex = 0;
 
     layerOptionsDialogue() {
-        window = GWindow.getWindow(main, "Layer Options", 0, 0, 400, 200, JAVA2D);
-        //check = new GCheckbox(window, 200, 150, 120, 20);
-        //check.setIconAlign(GAlign.LEFT, GAlign.MIDDLE);
-        //check.setText("Is Visible");
-        //check.setOpaque(false);
-        window.setVisible(false);
+
+        check = new GCheckbox(window, 5, 10, 120, 20);
+        check.setIconAlign(GAlign.LEFT, GAlign.MIDDLE);
+        check.setText("Is Visible");
+        check.setOpaque(true);
+
+        name = new GTextField(window, 5, 35, 150, 20);
+        name.setText(layers.get(changeIndex).name);
+
+        accept = new GButton(window, 5, 60, 60, 20);
+        accept.setText("Accept");
+        accept.addEventHandler(main, "submitLO");
+
+        cancel = new GButton(window, 70, 60, 60, 20);
+        cancel.setText("Cancel");
+        cancel.addEventHandler(this, "submitLO");
     }
 
-    void submit(GEvent e) {
+    void setupWin() {
+        window.getSurface().setSize(200, 119);
+        
+        if (isInManager())
+            changeIndex = (height - 86 - mouseY + managerScrolled)/20;
+        else
+            changeIndex = layers.indexOf(curLayer);
+        check.setSelected(curLayer.isVisible);
+        name.setText(layers.get(lOptions.changeIndex).name);
+        
+        check.setVisible(true);
+        name.setVisible(true);
+        accept.setVisible(true);
+        cancel.setVisible(true);
+        
     }
+
+    void cleanupWin() {
+        check.setVisible(false);
+        name.setVisible(false);
+        accept.setVisible(false);
+        cancel.setVisible(false);
+        println("LOPTIONS:", check.isVisible(), name.isVisible(), accept.isVisible(), cancel.isVisible());
+        lOptions.changeIndex = -1;
+    }
+}
+
+void submitLO(GButton b, GEvent e) {
+    if (b == lOptions.accept) {
+        Layer l = layers.get(lOptions.changeIndex);
+        l.name = lOptions.name.getText();
+        l.isVisible = lOptions.check.isSelected();
+    }
+
+    setDialogue(-1);
 }
 
 //======================================================================================
@@ -204,13 +288,10 @@ class layerOptionsDialogue {
 //======================================================================================
 
 class deleteLayerDialogue {
-    GWindow window;
     GButton y, n;
     GLabel info;
 
     deleteLayerDialogue() {
-        window = GWindow.getWindow(main, "Delete Layer", 0, 0, 200, 120, JAVA2D);
-        window.setActionOnClose(G4P.KEEP_OPEN);
 
         info = new GLabel(window, 10, 10, 180, 60);
         info.setTextAlign(GAlign.CENTER, GAlign.MIDDLE);
@@ -224,8 +305,19 @@ class deleteLayerDialogue {
         n = new GButton(window, 110, 80, 80, 20);
         n.setText("No");
         n.addEventHandler(main, "dlSubmit");
+    }
 
-        window.setVisible(false);
+    void setupWin() {
+        window.getSurface().setSize(200, 120);
+        info.setVisible(true);
+        y.setVisible(true);
+        n.setVisible(true);
+    }
+
+    void cleanupWin() {
+        info.setVisible(false);
+        y.setVisible(false);
+        n.setVisible(false);
     }
 }
 
@@ -233,10 +325,10 @@ void dlSubmit(GButton b, GEvent e) {
     if (b == dLayer.y) {
         int i = layers.indexOf(curLayer);
         layers.remove(curLayer);
-        curLayer = layers.get(i);
+        curLayer = layers.get(min(i, layers.size() - 1 ));
     }
-
-    dLayer.window.setVisible(false);
+    
+    setDialogue(-1);
 }
 
 //======================================================================================
@@ -293,7 +385,7 @@ class chooseColorDialogue extends PApplet {
                 }
             }
         }
-        
+
         run();
         isRunning = true;
     }
@@ -301,7 +393,7 @@ class chooseColorDialogue extends PApplet {
     void settings() {
         size(230, 200);
     }
-    
+
 
     void setup() {
         surface.setTitle("Choose Color");
@@ -319,24 +411,28 @@ class chooseColorDialogue extends PApplet {
             if (curLayer.colorIndex == i) stroke(255, 200, 100);
             rect(35 + 40*(i%5), 25 + 40*(i/5), 30, 30);
         }
-        
+
         rectMode(CORNER);
         strokeWeight(2);
-        fill((overButton() == 1)?color(100,200,100):255);
-        rect(20,170,70,20);
-        fill((overButton() == 2)?color(100,200,100):255);
-        rect(100,170,70,20);
+        fill((overButton() == 1)?color(100, 200, 100):255);
+        rect(20, 170, 70, 20);
+        fill((overButton() == 2)?color(100, 200, 100):255);
+        rect(100, 170, 70, 20);
         textAlign(CENTER);
         fill(0);
         text("Accept", 20, 172, 70, 20);
         text("Cancel", 100, 172, 70, 20);
     }
-    
-    void run(){
+
+    void setVisible(boolean b) {
+        surface.setVisible(b);
+    }
+
+    void run() {
         PApplet.runSketch(new String[]{"Choose Color"}, this);
     }
-    
-    void exit(){
+
+    void exit() {
         isRunning = false;
     }
 
@@ -350,24 +446,23 @@ class chooseColorDialogue extends PApplet {
                 }
             }
         }
-        
-        if(overButton() != 0) finish();
-        
+
+        if (overButton() != 0) finish();
     }
 
     void finish() {
         if (overButton() == 1) { 
-            if(index != -1)
+            if (index != -1)
                 layers.get(changeIndex).setColor(index);
         }
         surface.setVisible(false);
         index = -1;
         changeIndex = 0;
     }
-    
-    int overButton(){
-        if(mouseX >= 20 && mouseX <= 90) if(mouseY >= 170 && mouseY <= 190) return 1;
-        if(mouseX >= 100 && mouseX <= 170) if(mouseY >= 170 && mouseY <= 190) return 2;
+
+    int overButton() {
+        if (mouseX >= 20 && mouseX <= 90) if (mouseY >= 170 && mouseY <= 190) return 1;
+        if (mouseX >= 100 && mouseX <= 170) if (mouseY >= 170 && mouseY <= 190) return 2;
         return 0;
     }
 }

@@ -12,7 +12,7 @@ void makeNewFile() {
     snapPoint = null;
     layers.clear();
     layers.add(curLayer);
-    nfWin.reset();
+    nfWin.cleanupWin();
 }
 
 void makeNewFile(File f) {

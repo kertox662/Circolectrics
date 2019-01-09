@@ -4,7 +4,6 @@ import java.io.FileWriter; //FileIO
 
 import java.awt.Point; //Point class to store window location
 import java.awt.MouseInfo; //Get mouse locations
-import javax.swing.JColorChooser;
 
 import processing.awt.*;
 import java.awt.Frame;
@@ -62,6 +61,7 @@ void setup() {
     
     surface.setResizable(true);
     surface.setTitle("Traxmaker Plus");
+    
 
     //=====================================
     //============LAYER SETUP==============
@@ -110,12 +110,15 @@ void setup() {
     DLHighlight = makeHighlight(DLIcon);
 
     surface.setAlwaysOnTop(true);
+    window = GWindow.getWindow(this, "Dialogue", width/2, height/2, 100,100,JAVA2D);
+    window.setActionOnClose(G4P.KEEP_OPEN);
     nfWin = new newFileDialogue();
     cText = new createTextDialogue();
     cComp = new chooseComponentDialogue();
     lOptions = new layerOptionsDialogue();
     dLayer = new deleteLayerDialogue();
     ccD = new chooseColorDialogue();
+    window.setVisible(false);
     surface.setAlwaysOnTop(false);
 
     imageMode(CENTER);
