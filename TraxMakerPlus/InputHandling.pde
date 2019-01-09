@@ -33,10 +33,7 @@ void mousePressed(MouseEvent e) {
                 selectOutput("Save File", "saveToFile");
             }
         } else if (isInManager()) {
-            int index = (height - 96 - mouseY + managerScrolled)/20;
-            movingLayerInd = index;
-            moveToInd = (height - 86 - mouseY + managerScrolled)/20;
-            ;
+            int index = (height - 86 - mouseY + managerScrolled)/20;
             if (index >= layers.size()) return;
             if (mouseX >= width - 115) {
                 curLayer = layers.get(index);
@@ -47,7 +44,7 @@ void mousePressed(MouseEvent e) {
             }
 
             if (e.getCount() == 2) {
-                setDialogue(3);
+                //Do edit Dialogue
             }
         } else if (isInLayerTab()) {
             if (dist(mouseX, mouseY, width - 130, 88) <= 20) {
@@ -78,39 +75,13 @@ void mousePressed(MouseEvent e) {
     //p = new PWin(400,200);
 }
 
-void mouseClicked(MouseEvent e) {
-    if (mouseButton == LEFT) {
-        if (isInManager()) {
-            if (e.getCount() == 2) {
-                setDialogue(3);
-            }
-        }
-    }
-}
-
 void mouseDragged() {
     if (isInViewport()) {
         if (Tool.curTool == Tool.Pan) {
             curView.x += (mouseX - pmouseX);
             curView.y += (mouseY - pmouseY);
         }
-    } 
-    if (isInManager()) {
-        int index = (height - 86 - mouseY + managerScrolled)/20;
-        moveToInd = min(index, layers.size());
     }
-}
-
-void mouseReleased() {
-    if (moveToInd - movingLayerInd > 1) {
-        layers.remove(curLayer);
-        layers.add(moveToInd - 1, curLayer);
-    } else if (moveToInd - movingLayerInd < 0) {
-        layers.remove(curLayer);
-        layers.add(moveToInd, curLayer);
-    }
-    moveToInd = -1;
-    movingLayerInd = -1;
 }
 
 void mouseWheel(MouseEvent e) {

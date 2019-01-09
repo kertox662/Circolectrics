@@ -1,5 +1,3 @@
-int movingLayerInd = -1, moveToInd = -1;
-
 class Layer {
     ArrayList<LineSegment> tracks;
     ArrayList<Component> components;

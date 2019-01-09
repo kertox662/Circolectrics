@@ -22,11 +22,8 @@ void setDialogue(int x){
     
     if(x != 3){ //Edit Layer
         lOptions.window.setVisible(false);
-        lOptions.changeIndex = -1;
     } else{
         lOptions.window.setVisible(true);
-        lOptions.changeIndex = (height - 86 - mouseY + managerScrolled)/20;
-        lOptions.check.setSelected(curLayer.isVisible);
     }
     
     if(x != 4){ //Delete Layer
@@ -183,33 +180,22 @@ class chooseComponentDialogue {
 class layerOptionsDialogue {
     GWindow window;
     GCheckbox check;
-    GTextField name;
-    GButton accept, cancel;
-    int changeIndex = 0;
+    GImageButton hsbc;
+    GImageButton vc;
+    File initFile;
 
     int s = 100;
 
     layerOptionsDialogue() {
-        window = GWindow.getWindow(main, "Layer Options", 0, 0, 200, 150, JAVA2D);
-        
-        check = new GCheckbox(window, 5, 10, 120, 20);
-        check.setIconAlign(GAlign.LEFT, GAlign.MIDDLE);
-        check.setText("Is Visible");
-        check.setOpaque(true);
-        
-        name = new GTextField(window, 5, 35, 150, 20);
-        name.setText(layers.get(changeIndex).name);
-        
-        accept = new GButton(window, 5, 60, 60, 20);
-        accept.setText("Accept");
-        
-        cancel = new GButton(window, 70, 60, 60, 20);
-        cancel.setText("Cancel");
-        
+        window = GWindow.getWindow(main, "Layer Options", 0, 0, 400, 200, JAVA2D);
+        //check = new GCheckbox(window, 200, 150, 120, 20);
+        //check.setIconAlign(GAlign.LEFT, GAlign.MIDDLE);
+        //check.setText("Is Visible");
+        //check.setOpaque(false);
         window.setVisible(false);
     }
 
-    void submit(GButton b, GEvent e) {
+    void submit(GEvent e) {
     }
 }
 
@@ -247,7 +233,7 @@ void dlSubmit(GButton b, GEvent e) {
     if (b == dLayer.y) {
         int i = layers.indexOf(curLayer);
         layers.remove(curLayer);
-        curLayer = layers.get(min(i, layers.size() - 1 ));
+        curLayer = layers.get(i);
     }
 
     dLayer.window.setVisible(false);
