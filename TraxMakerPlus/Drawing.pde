@@ -87,26 +87,26 @@ void updatePlacing() {
     //p.points[1].set(mouseX*viewScale + curView.x, mouseY * viewScale + curView.y );
     PVector m = getRelativeMouse();
     p.points[1].set(m.x, m.y);
-    
+
     PVector ps = new PVector();
-    
+
     if (AngleSnap.curSnap == AngleSnap.Perpendicular) {
-        if(abs(p.points[0].x - m.x) >= abs(p.points[0].y - m.y)){
+        if (abs(p.points[0].x - m.x) >= abs(p.points[0].y - m.y)) {
             ps.set(m.x, p.points[0].y);
-        } else{
+        } else {
             ps.set(p.points[0].x, m.y);
         }
-        
+
         snapPoint = null;
     } else ps = null;
-    
+
     PVector psT = (Snap.curSnap == Snap.Perpendicular)? findSnapPoint(p.points[0]):findSnapPoint(m);
-    if(psT != null)
+    if (psT != null)
         ps = psT;
-    
+
     snapPoint = ps;
-    
-    
+
+
     if (ps != null) {
         p.points[1] = ps;
     }
@@ -154,6 +154,10 @@ void drawIcons() {
             textSize(8);
             text(Tool.toolName[i], iconOffset[i], 133 + i*60);
         }
+        fill(0);
+        textSize(8);
+        if (Tool.curTool.ordinal() == i)
+            text(Tool.toolName[i], iconOffset[i], 133 + i*60);
     }
 
     image(selectedTool, iconOffset[Tool.curTool.ordinal()], 100 + 60 * Tool.curTool.ordinal());
@@ -174,7 +178,7 @@ void updateOffset() {
     }
 
     for (int i = 0; i < Tool.toolName.length; i++)
-        iconOffset[i] = (i == j)? min(maxIconOffset, iconOffset[i] + offsetIncSpeed): max(minIconOffset, iconOffset[i] - offsetIncSpeed);
+        iconOffset[i] = (i == j || i == Tool.curTool.ordinal())? min(maxIconOffset, iconOffset[i] + offsetIncSpeed): max(minIconOffset, iconOffset[i] - offsetIncSpeed);
 }
 
 
@@ -333,11 +337,11 @@ void fitBoardToView() {
     float dY = yMax - yMin;
     viewScale = min(zoomMax, max(zoomMin, min((width - 240) / dX, (height - 150) / dY)));
     curView.set(-xMin * viewScale + 80, -yMin * viewScale + 70);
-    
-    if((width - 240) / dX < (height - 150) / dY){
+
+    if ((width - 240) / dX < (height - 150) / dY) {
         float dif = (height - 150) - dY * viewScale;
         curView.y += dif/2;
-    } else{
+    } else {
         float dif = (width - 240) - dX * viewScale;
         curView.x += dif/2;
     }
@@ -355,7 +359,7 @@ void drawLayerManager() {
     rotate(HALF_PI);
     text("Layers", 0, 0);
     popMatrix();
-    
+
     stroke(127);
     strokeWeight(3);
     fill(255, 127);
@@ -407,34 +411,39 @@ void drawLayerManager() {
             x++;
         }
     }
+    
+    fill(0);
+    if(moveToInd - movingLayerInd  > 1 || moveToInd - movingLayerInd  < 0){
+        line(width - 150, height - 90 - 20*moveToInd, width, height - 90 - 20*moveToInd);
+    }
 
     textAlign(CENTER);
     rectMode(CORNER);
-    
+
     fill(180);
     stroke(127);
     rect(width - 160, 72, 160, 50);
     fill(0);
     textSize(10);
     textLeading(10);
-    
-    if(NLFrames > 0){
+
+    if (NLFrames > 0) {
         image(NLHighlight, width - 130, 88);
         NLFrames--;
     } else
         image(NLIcon, width - 130, 88);
     text("Add\nLayer", width - 130, 107);
-    
-    
-    if(ELFrames > 0){
+
+
+    if (ELFrames > 0) {
         image(ELHighlight, width - 80, 88);
         ELFrames--;
     } else
         image(ELIcon, width - 80, 88);
     text("Edit\nLayer", width - 80, 107);
-    
-    
-    if(DLFrames > 0){
+
+
+    if (DLFrames > 0) {
         image(DLHighlight, width - 30, 88);
         DLFrames--;
     } else
@@ -446,7 +455,7 @@ boolean isInManager() {
     return (mouseX >= width - 160 && mouseY >= 122 && mouseY <= height - 82);
 }
 
-boolean isInLayerTab(){
+boolean isInLayerTab() {
     return (mouseX >= width - 160 && mouseY >= 72 && mouseY <= 122);
 }
 
@@ -454,7 +463,7 @@ boolean isInViewport() {
     return (!(isInToolBox() || isInSnapBox() || isInFileBox() || isInManager() || isInLayerTab()));
 }
 
-void defineViewPortSize(){
+void defineViewPortSize() {
     viewPortMin.set( -curView.x/viewScale, -curView.y/viewScale);
     viewPortMax.set((width - curView.x)/viewScale, (height - curView.y) / viewScale);
 }
