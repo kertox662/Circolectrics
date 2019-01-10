@@ -5,10 +5,10 @@ enum Tool {
         Select, 
         Pan, 
         FitViewToBoard, 
-        None;
+        Rotate;
 
     static Tool curTool = Tool.Track;
-    static String[] toolName = {"Add Track", "Add Component", "Add Text", "Select", "Pan View", "Fit Board To View", "Cancel"};
+    static String[] toolName = {"Add Track", "Add Component", "Add Text", "Select", "Pan View", "Fit Board To View", "Rotate"};
 }
 
 void changeTool(Tool t) {
@@ -32,7 +32,7 @@ PImage[] loadToolIcons() {
     imgs[3] = loadImage("Icons/Tools/SelectIcon.png");
     imgs[4] = loadImage("Icons/Tools/PanIcon.png");
     imgs[5] = loadImage("Icons/Tools/BoardViewIcon.png");
-    imgs[6] = loadImage("Icons/Tools/CancelIcon2.png");
+    imgs[6] = loadImage("Icons/Tools/RotateIcon.png");
 
     return imgs;
 }

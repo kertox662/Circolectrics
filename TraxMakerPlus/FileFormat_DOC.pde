@@ -48,6 +48,7 @@ Point 2 (x,y)
 Part Type
 ---------Not Sure Yet-------------
 Base Point (x,y)
+Rotation
 -----------Or---------------
 Pad 1
 Pad 2

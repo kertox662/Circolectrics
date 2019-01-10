@@ -4,17 +4,19 @@ PImage NLHighlight, DLHighlight, ELHighlight;
 int NLFrames, DLFrames, ELFrames;
 
 void updateView() {
+    float factor = 30 / frameRate;
+    
     if (movePressed[0]) {
-        curView.y += max(2, panSpeed);
+        curView.y += panSpeed * factor;
     }
     if (movePressed[1]) {
-        curView.x += max(2, panSpeed);
+        curView.x += panSpeed * factor;
     }
     if (movePressed[2]) {
-        curView.y -= max(2, panSpeed);
+        curView.y -= panSpeed * factor;
     }
     if (movePressed[3]) {
-        curView.x -= max(2, panSpeed);
+        curView.x -= panSpeed * factor;
     }
 }
 

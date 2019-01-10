@@ -1,36 +1,29 @@
 PApplet main = this;
 GWindow window;
+PSurface dialogueSurface;
 
 void setDialogue(int x) {
     window.setVisible(false);
-    println("X:", x);
     if (x != 0) { 
         nfWin.cleanupWin();
-        println("Clean: New File");
     }
     if (x != 1) { 
         cText.cleanupWin();
-        println("Clean: Text");
     }
     if (x != 2) { 
         cComp.cleanupWin();
-        println("Clean: Comp");
     }
     if (x != 3) { 
         lOptions.cleanupWin();
-        println("Clean: Layer Options");
     }
     if (x != 4) { 
         dLayer.cleanupWin();
-        println("Clean: Delete Layer");
     }
     if (x != 5) { 
         ccD.getSurface().setVisible(false);
-        println("Clean: Colors");
     }
     if (x == -1) { 
-        window.setVisible(false); 
-        println("Clean: Full");
+        window.setVisible(false);
         return;
     }
 
@@ -38,23 +31,18 @@ void setDialogue(int x) {
 
     if (x == 0) { //New File Window
         nfWin.setupWin();
-        println("New File");
     } else if (x == 1) { //Create Text
         cText.setupWin();
-        println("Text");
     } else if (x == 2) { //Add Component
         cComp.setupWin();
-        println("Comp");
     } else if (x == 3) { //Edit Layer
         lOptions.setupWin();
-        println("Edit Layer");
     } else if (x == 4) { //Delete Layer
         dLayer.setupWin();
-        println("Delete Layer");
     } else if (x == 5) { //Choose Color
         if (ccD.isRunning == false) ccD.run();
         else ccD.setVisible(true);
-        ccD.changeIndex = (height - 86 - mouseY + managerScrolled)/20;
+        ccD.changeIndex = min((height - 86 - mouseY + managerScrolled)/20, layers.size() - 1 );
         return;
     }
 
@@ -117,7 +105,8 @@ class newFileDialogue {
     }
 
     void setupWin() {
-        window.getSurface().setSize(300, 200);
+        dialogueSurface.setSize(300, 200);
+        dialogueSurface.setTitle("New File");
         widthEntry.setVisible(true);
         heightEntry.setVisible(true);
         firstThickness.setVisible(true);
@@ -144,6 +133,7 @@ class newFileDialogue {
 
         widthEntry.setText("Width");
         heightEntry.setText("Height");
+        firstThickness.setText("Track Width");
         check.setSelected(false);
         initFile = null;
         fileName.setText("No File Selected");
@@ -225,29 +215,38 @@ class layerOptionsDialogue {
     GCheckbox check;
     GTextField name;
     GButton accept, cancel;
+    GLabel thickInfo;
+    GTextField thickness;
     int changeIndex = 0;
 
     layerOptionsDialogue() {
 
-        check = new GCheckbox(window, 5, 10, 120, 20);
+        check = new GCheckbox(window, 5, 85, 120, 20);
         check.setIconAlign(GAlign.LEFT, GAlign.MIDDLE);
         check.setText("Is Visible");
         check.setOpaque(true);
 
-        name = new GTextField(window, 5, 35, 150, 20);
+        name = new GTextField(window, 5, 10, 150, 20);
         name.setText(layers.get(changeIndex).name);
-
-        accept = new GButton(window, 5, 60, 60, 20);
+        
+        thickInfo = new GLabel(window, 5, 35, 100, 20);
+        thickInfo.setText("Track Thickness");
+        thickInfo.setOpaque(true);
+        
+        thickness = new GTextField(window, 5, 60, 100, 20);
+        thickness.setText("0");
+        
+        accept = new GButton(window, 5, 110, 60, 20);
         accept.setText("Accept");
         accept.addEventHandler(main, "submitLO");
 
-        cancel = new GButton(window, 70, 60, 60, 20);
+        cancel = new GButton(window, 70, 110, 60, 20);
         cancel.setText("Cancel");
-        cancel.addEventHandler(this, "submitLO");
+        cancel.addEventHandler(main, "submitLO");
     }
 
     void setupWin() {
-        window.getSurface().setSize(200, 119);
+        dialogueSurface.setSize(200, 135);
         
         if (isInManager())
             changeIndex = (height - 86 - mouseY + managerScrolled)/20;
@@ -255,11 +254,14 @@ class layerOptionsDialogue {
             changeIndex = layers.indexOf(curLayer);
         check.setSelected(curLayer.isVisible);
         name.setText(layers.get(lOptions.changeIndex).name);
+        thickness.setText(str(layers.get(lOptions.changeIndex).defaultThickness));
         
         check.setVisible(true);
         name.setVisible(true);
         accept.setVisible(true);
         cancel.setVisible(true);
+        thickInfo.setVisible(true);
+        thickness.setVisible(true);
         
     }
 
@@ -268,16 +270,21 @@ class layerOptionsDialogue {
         name.setVisible(false);
         accept.setVisible(false);
         cancel.setVisible(false);
-        println("LOPTIONS:", check.isVisible(), name.isVisible(), accept.isVisible(), cancel.isVisible());
+        thickInfo.setVisible(false);
+        thickness.setVisible(false);
         lOptions.changeIndex = -1;
     }
 }
 
 void submitLO(GButton b, GEvent e) {
+    println("HERE");
     if (b == lOptions.accept) {
         Layer l = layers.get(lOptions.changeIndex);
         l.name = lOptions.name.getText();
         l.isVisible = lOptions.check.isSelected();
+        float t = float(lOptions.thickness.getText());
+        if(!Float.isNaN(t))
+            l.setThickness(t);
     }
 
     setDialogue(-1);
@@ -308,7 +315,7 @@ class deleteLayerDialogue {
     }
 
     void setupWin() {
-        window.getSurface().setSize(200, 120);
+        dialogueSurface.setSize(200, 120);
         info.setVisible(true);
         y.setVisible(true);
         n.setVisible(true);

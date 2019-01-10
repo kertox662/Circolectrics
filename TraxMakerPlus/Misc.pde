@@ -68,6 +68,29 @@ PImage makeHighlight(PImage i){
     return img;
 }
 
+PImage switchColor(PImage i, color c){
+    PImage img = i.copy();
+    img.loadPixels();
+    for(int j = 0; j < img.pixels.length; j++){
+        if(img.pixels[j] == color(0)) img.pixels[j] = c;
+    }
+    
+    img.updatePixels();
+    return img;
+}
+
 PVector getRelativeMouse(){
     return new PVector((mouseX - curView.x)/viewScale, (mouseY - curView.y) / viewScale);
+}
+
+void polygon(float x, float y, float radius, int npoints) {
+    //println(npoints);
+  float angle = TWO_PI / npoints;
+  beginShape();
+  for (float a = angle / 2; a < TWO_PI + angle; a += angle) {
+    float sx = x + cos(a) * radius;
+    float sy = y + sin(a) * radius;
+    vertex(sx, sy);
+  }
+  endShape(CLOSE);
 }

@@ -8,6 +8,9 @@ class Layer {
     int colorIndex;
     String name;
     boolean isVisible = true;
+    
+    int padShape = 8, padSize = 72;
+    boolean doTint = true;
 
     Layer(float dt) {
         tracks = new ArrayList<LineSegment>();
@@ -44,6 +47,10 @@ class Layer {
         tracks.add(t);
     }
     
+    void addComponent(Component c){
+        components.add(c);
+    }
+    
     void addText(Text t){
         texts.add(t);
         t.c = colorIndex;
@@ -66,7 +73,10 @@ class Layer {
     void drawComponents() {
         for (int i = 0; i < components.size(); i++) {
             try {
-                components.get(i).display();
+                if(doTint)
+                    components.get(i).display(ccD.colors[colorIndex]);
+                else
+                    components.get(i).display();
             } 
             catch(IndexOutOfBoundsException e) {
             }
@@ -82,6 +92,12 @@ class Layer {
         for(int i = 0; i < texts.size(); i++){
             texts.get(i).c = index;
         }
+    }
+    
+    void setThickness(float t){
+        defaultThickness = t;
+        for(int i = 0; i < tracks.size(); i++)
+            tracks.get(i).thickness = t;
     }
 }
 

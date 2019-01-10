@@ -143,8 +143,6 @@ void mouseWheel(MouseEvent e) {
 }
 
 void keyPressed() {
-    if(float(str(key)) <= 5)
-        setDialogue(int(str(key)));
     
     if (key == CODED) {
         switch(keyCode) {
@@ -179,6 +177,32 @@ void keyPressed() {
         case 'D':
             movePressed[3] = true;
             break;
+        case 'r':
+        case 'R':
+            changeTool(Tool.Rotate);
+            break;
+        case 'f':
+        case 'F':
+            changeTool(Tool.FitViewToBoard);
+            break;
+        case 'c':
+        case 'C':
+            Snap.nextSnap();
+            break;
+        case 'v':
+        case 'V':
+            AngleSnap.nextSnap();
+            break;
+        case '1':
+            changeTool(Tool.Track);
+            break;
+        case '2':
+            changeTool(Tool.Component);
+            break;
+        case '3':
+            changeTool(Tool.Text);
+            break;
+        case ' ':
         }
     }
 }
@@ -221,12 +245,7 @@ void keyReleased() {
         case 'D':
             movePressed[3] = false;
             break;
-        case 'r':
-        case 'R':
-            resetView();
-            break;
-        case ' ':
-            //println(curView);
+        
         }
     }
 }

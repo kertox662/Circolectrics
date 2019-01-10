@@ -4,15 +4,18 @@ PVector[] fileIconLoc;
 String fileExtension = ".tmf";
 
 void makeNewFile() {
-    
-    curLayer = new Layer(30);
     curView.set(0, 0);
     selectedTrack = null; 
     placingTrack = null;
     snapPoint = null;
     layers.clear();
+    
+    float t = float(nfWin.firstThickness.getText());
+    println("T:",t);
+    if(Float.isNaN(t) || t <= 0) t = 30;
+    curLayer = new Layer(t);
     layers.add(curLayer);
-    nfWin.cleanupWin();
+    
 }
 
 void makeNewFile(File f) {
@@ -23,18 +26,13 @@ void makeNewFile(File f) {
 void makeNewFile(int w, int h) {
     makeNewFile();
     
-    int th = 30;
-    if(nfWin.check.isSelected()){
-        String s = nfWin.firstThickness.getText();
-        if(int(s) > 0)
-            th = int(s);
-        else
-            println("Invalid Thickness");
+    float th = float(nfWin.firstThickness.getText());
+    if(Float.isNaN(th) || th <= 0){
+        th = 30;
     }
-    
     Layer l = new Layer(th, "Outline", 4);
-    layers.add(0, l);
-    //int w2 = -w/2, h2 = -h/2;
+    layers.add(0,l);
+    
     PVector p1 = new PVector(0, 0);
     PVector p2 = new PVector(w, 0);
     PVector p3 = new PVector(w, h);

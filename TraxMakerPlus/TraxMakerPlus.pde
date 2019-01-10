@@ -9,6 +9,8 @@ import processing.awt.*;
 import java.awt.Frame;
 import java.lang.reflect.Field;
 
+import java.lang.System;
+
 boolean temp = true;
 
 LineSegment selectedTrack, placingTrack;
@@ -18,7 +20,7 @@ Layer curLayer;
 ArrayList<Layer> layers;
 
 PVector curView;
-boolean[] movePressed; //{'W', 'A', 'S', 'D'}
+boolean[] movePressed; //{'W', 'A', 'S', 'D'} || {UP, LEFT, DOWN, UP}
 float panSpeed = 8;
 float viewScale = 1;
 boolean invertedScroll = false;
@@ -26,7 +28,7 @@ boolean invertedScroll = false;
 PImage[] icons;
 PImage highlightTool, selectedTool;
 
-final float zoomMin = 0.1, zoomMax = 5;
+final float zoomMin = 0.1, zoomMax = 3;
 final int minIconOffset = -15, maxIconOffset = 37;
 final int snapDist = 20;
 
@@ -51,6 +53,8 @@ float managerOffset = 82;
 
 PVector viewPortMax, viewPortMin;
 
+Component[] cs;
+
 
 void settings() {
     size(displayWidth, displayHeight, JAVA2D);
@@ -62,7 +66,6 @@ void setup() {
     surface.setResizable(true);
     surface.setTitle("Traxmaker Plus");
     
-
     //=====================================
     //============LAYER SETUP==============
     //=====================================
@@ -109,6 +112,10 @@ void setup() {
     ELHighlight = makeHighlight(ELIcon);
     DLHighlight = makeHighlight(DLIcon);
 
+    //=====================================
+    //============GUI Window===============
+    //=====================================
+
     surface.setAlwaysOnTop(true);
     window = GWindow.getWindow(this, "Dialogue", width/2, height/2, 100,100,JAVA2D);
     window.setActionOnClose(G4P.KEEP_OPEN);
@@ -120,9 +127,31 @@ void setup() {
     ccD = new chooseColorDialogue();
     window.setVisible(false);
     surface.setAlwaysOnTop(false);
-
+    dialogueSurface = window.getSurface();
+    
+    //=====================================
+    //============Miscellaneous============
+    //=====================================
+    
     imageMode(CENTER);
     textAlign(CENTER);
+    blendMode(REPLACE);
+    
+    
+    cs = new Component[13]; 
+    cs[0] = new TwoPad(new PVector(200,200));
+    cs[1] = new TwoPad(new PVector(600,200));
+    cs[2] = new TwoPadShort(new PVector(1000,200));
+    cs[3] = new ThreePad(new PVector(1300, 200));
+    cs[4] = new EightPin(new PVector(1800, 200));
+    cs[5] = new FourteenPin(new PVector(2200, 200));
+    cs[6] = new SixteenPin(new PVector(2600, 200));
+    cs[7] = new EighteenPin(new PVector(3000, 200));
+    cs[8] = new FortyPin(new PVector(300, 2000));
+    cs[9] = new VResistor(new PVector(1500, 1500));
+    cs[10] = new LCD(new PVector(1500,2000));
+    cs[11] = new Power4(new PVector(3000,1500));
+    cs[12] = new Power6(new PVector(3000, 2300));
 }
 
 void draw() {
@@ -153,6 +182,11 @@ void drawApp() {
     drawLayers();
     if (snapPoint != null)
         drawSnapPoint(snapPoint);
+    
+    for(int i = 0; i < cs.length; i++)
+        cs[i].display(ccD.colors[i]);
+        //cs[i].display();
+    
     popMatrix();
     drawLayerManager();
     drawIcons();
