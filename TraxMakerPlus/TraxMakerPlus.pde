@@ -1,45 +1,57 @@
 import g4p_controls.*; //Separate Windows
 
-import java.io.FileWriter; //FileIO
+import java.io.FileWriter; //File Output
 
 import java.awt.Point; //Point class to store window location
 import java.awt.MouseInfo; //Get mouse locations
 
-import processing.awt.*;
+import processing.awt.*; //To be able to cast PSurface to Frame to get the location of the window relative to the display
 import java.awt.Frame;
 import java.lang.reflect.Field;
 
-import java.lang.System;
+import java.lang.System; //Nanotime, Temporary
 
-boolean temp = true;
+//============================================================================================================================================================================
+//============================================================================================================================================================================
+//============================================================================================================================================================================
 
-LineSegment selectedTrack, placingTrack;
-PVector snapPoint;
+//Edit Fields
+LineSegment selectedTrack, placingTrack; //Objects that hold temporary access to linesegment objects that are currently being edited
+Text selectedText, placingText, editText; //Same as tracks, but for text
+Component placingComponent, selectedComponent, editComponent;//Same as tracks, but for components
 
-Layer curLayer;
-ArrayList<Layer> layers;
+Layer curLayer; //Keeps track of the current selected layer
+ArrayList<Layer> layers; //List of all of the layers
 
-PVector curView;
+//Viewport Fields
+PVector curView; //Offset from the screen
 boolean[] movePressed; //{'W', 'A', 'S', 'D'} || {UP, LEFT, DOWN, UP}
-float panSpeed = 8;
-float viewScale = 1;
-boolean invertedScroll = false;
+float panSpeed = 8; //Speed of offset movement
+float viewScale = 1; //Global scale when drawing in the viewport
+boolean invertedScroll = false; //
+final float zoomMin = 0.1, zoomMax = 3; //Maximum and minimum viewScale values
+PVector viewPortMax, viewPortMin; //viewPort corners relative to curView and viewScale
 
-PImage[] icons;
-PImage highlightTool, selectedTool;
+//Tools
+PImage[] icons; //Tool icons appearing in toolbox (Left of screen)
+PImage highlightTool, selectedTool; //Showing hovering or selected tool (also used for other highlights)
+int[] iconOffset; //The offset for each tool. This will display the tool shifted over to this x coordinate (Center).
+final int minIconOffset = -15, maxIconOffset = 37; //Offest values to target when going up or down
+int offsetIncSpeed = 6; //The rate at which offset values are increased or decreased
 
-final float zoomMin = 0.1, zoomMax = 3;
-final int minIconOffset = -15, maxIconOffset = 37;
-final int snapDist = 20;
+//Snapping
+PVector snapPoint; //Global snapping point value
+int snapAngle = 30; //Angle to snap to when the angle snapping mode is "Angular"
+final int snapDist = 20; //Distance to snap at
 
-final int minFileOffset = -15;
+//File Icons
+final int minFileOffset = -15; //Same thing as iconOffset with their min and max
 final int maxFileOffset = 30;
 
-int offsetIncSpeed = 6;
-int[] iconOffset;
-
-boolean doFullScreen = true;
-
+//Dialogues
+//These objects will setup the windows or will extend PApplet to be the
+//windows for the dialogues that will take certain inputs and change the
+//state of the application
 newFileDialogue nfWin;
 createTextDialogue cText;
 chooseComponentDialogue cComp;
@@ -47,17 +59,24 @@ layerOptionsDialogue lOptions;
 deleteLayerDialogue dLayer;
 chooseColorDialogue ccD;
 
-int managerScrolled = 0;
-int maxAmount = 1;
-float managerOffset = 82;
+//Layer Manager
+int managerScrolled = 0; //Amount by which to offset the layer manager. Updates when scrolled in the manager
+int maxAmount = 1; //Amount of layers that can be displayed in the manager. (Defaults to 1, but gets recalculated regularly).
+float managerOffset = 82; //Distance from the bottom that the manager starts
 
-PVector viewPortMax, viewPortMin;
+//Components
+Component[] masterComponents; //Components that will be loaded in and copied whenever making new components.
+boolean showOfficialNames = false; //Instead of the names given by the program, uses official names. (EG. SIP 3 instead of Three Pad)
 
-Component[] cs;
+//Misc
+boolean doFullScreen = true; //Not yet implemented
 
+//============================================================================================================================================================================
+//============================================================================================================================================================================
+//============================================================================================================================================================================
 
 void settings() {
-    size(displayWidth, displayHeight, JAVA2D);
+    size(displayWidth, displayHeight, JAVA2D); //Window starts off as the width and height of the display
 }
 
 void setup() {
@@ -65,7 +84,7 @@ void setup() {
     
     surface.setResizable(true);
     surface.setTitle("Traxmaker Plus");
-    
+    G4P.messagesEnabled(false);
     //=====================================
     //============LAYER SETUP==============
     //=====================================
@@ -77,8 +96,9 @@ void setup() {
     placingTrack = null;
     snapPoint = null;
     layers.add(curLayer);
-
-
+    
+    
+    masterComponents = loadMaster();
     //=====================================
     //============LOAD ICONS===============
     //=====================================
@@ -121,13 +141,14 @@ void setup() {
     window.setActionOnClose(G4P.KEEP_OPEN);
     nfWin = new newFileDialogue();
     cText = new createTextDialogue();
-    cComp = new chooseComponentDialogue();
     lOptions = new layerOptionsDialogue();
     dLayer = new deleteLayerDialogue();
     ccD = new chooseColorDialogue();
+    cComp = new chooseComponentDialogue();
     window.setVisible(false);
     surface.setAlwaysOnTop(false);
     dialogueSurface = window.getSurface();
+    setDialogue(-1);
     
     //=====================================
     //============Miscellaneous============
@@ -138,20 +159,8 @@ void setup() {
     blendMode(REPLACE);
     
     
-    cs = new Component[13]; 
-    cs[0] = new TwoPad(new PVector(200,200));
-    cs[1] = new TwoPad(new PVector(600,200));
-    cs[2] = new TwoPadShort(new PVector(1000,200));
-    cs[3] = new ThreePad(new PVector(1300, 200));
-    cs[4] = new EightPin(new PVector(1800, 200));
-    cs[5] = new FourteenPin(new PVector(2200, 200));
-    cs[6] = new SixteenPin(new PVector(2600, 200));
-    cs[7] = new EighteenPin(new PVector(3000, 200));
-    cs[8] = new FortyPin(new PVector(300, 2000));
-    cs[9] = new VResistor(new PVector(1500, 1500));
-    cs[10] = new LCD(new PVector(1500,2000));
-    cs[11] = new Power4(new PVector(3000,1500));
-    cs[12] = new Power6(new PVector(3000, 2300));
+    
+    surface.setIcon(loadImage("Icons/Tools/TrackIcon.png"));
 }
 
 void draw() {
@@ -160,7 +169,7 @@ void draw() {
     drawApp();
 }
 
-void updateApp() {
+void updateApp() { //Updates the app values
     snapPoint = null;
     updateView();
     updateOffset();
@@ -173,8 +182,8 @@ void updateApp() {
     
 }
 
-void drawApp() {
-    //int e = millis();
+void drawApp() { //Draws the elements of the app
+    //Viewport Stuff
     pushMatrix();
     translate(curView.x, curView.y);
     scale(viewScale);
@@ -182,12 +191,8 @@ void drawApp() {
     drawLayers();
     if (snapPoint != null)
         drawSnapPoint(snapPoint);
-    
-    for(int i = 0; i < cs.length; i++)
-        cs[i].display(ccD.colors[i]);
-        //cs[i].display();
-    
     popMatrix();
+    //UI Stuff
     drawLayerManager();
     drawIcons();
     drawFileIcon();

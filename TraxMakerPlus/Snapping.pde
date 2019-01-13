@@ -1,3 +1,5 @@
+PImage snapIcon;
+
 enum Snap {
     Off, 
         Closest, 
@@ -18,8 +20,6 @@ enum Snap {
     }
 }
 
-PImage snapIcon;
-
 PVector findSnapPoint(PVector p) {
     PVector ps = null;
     if (Snap.curSnap != Snap.Off) {
@@ -35,6 +35,19 @@ PVector findSnapPoint(PVector p) {
                         if (d <= snapDist && d <= smallestDist) {
                             smallestDist = d;
                             ps = ls.intersect(mouse);
+                        }
+                    }
+                }
+
+                for (int j = 0; j < l.components.size(); j++) {
+                    Component c = l.components.get(j);
+                    for (int k = 0; k < c.basePoints.length; k++) {
+                        PVector bP = PVector.add(c.basePoints[k], c.loc);
+                        float d = dist(mouse, bP);
+                        if (d < smallestDist) {
+                            smallestDist = d;
+                            ps = bP;
+                            break;
                         }
                     }
                 }
@@ -57,6 +70,19 @@ PVector findSnapPoint(PVector p) {
                         ps = ls.points[1].copy();
                     }
                 }
+
+                for (int j = 0; j < l.components.size(); j++) {
+                    Component c = l.components.get(j);
+                    for (int k = 0; k < c.basePoints.length; k++) {
+                        PVector bP = PVector.add(c.basePoints[k], c.loc);
+                        float d = dist(mouse, bP);
+                        if (d < smallestDist) {
+                            smallestDist = d;
+                            ps = bP;
+                            break;
+                        }
+                    }
+                }
             }
         } else if (Snap.curSnap == Snap.Perpendicular) {
             for (int i = 0; i < layers.size(); i++) {
@@ -67,7 +93,7 @@ PVector findSnapPoint(PVector p) {
                     PVector toTest = ls.intersect(p);
                     float d = dist(p, toTest);
                     float dl = ls.distToLine(mouse);
-                    if(dl <= snapDist && dl <= smallestDist){
+                    if (dl <= snapDist && dl <= smallestDist) {
                         smallestDist = d;
                         ps = toTest;
                     }

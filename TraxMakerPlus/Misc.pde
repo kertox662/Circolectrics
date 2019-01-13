@@ -84,7 +84,6 @@ PVector getRelativeMouse(){
 }
 
 void polygon(float x, float y, float radius, int npoints) {
-    //println(npoints);
   float angle = TWO_PI / npoints;
   beginShape();
   for (float a = angle / 2; a < TWO_PI + angle; a += angle) {

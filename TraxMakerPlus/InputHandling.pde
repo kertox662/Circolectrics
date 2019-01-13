@@ -11,6 +11,22 @@ void mousePressed(MouseEvent e) {
                     placingTrack.setSlope();
                     placingTrack = null;
                 }
+            } else if (Tool.curTool == Tool.Text) {
+                if (placingText == null) {
+                    PVector mouse = getRelativeMouse();
+                    placingText = new Text("Text", 12, mouse);
+                    curLayer.texts.add(placingText);
+                } else {
+                    editText = placingText;
+                    placingText = null;
+                    setDialogue(1);
+                }
+            } else if (Tool.curTool == Tool.Component) {
+                if (placingComponent == null) {
+                    setDialogue(2);
+                } else{
+                    placingComponent = null;
+                }
             }
         } else if (isInToolBox()) {
             for (int i = 0; i < Tool.toolName.length; i++) {
@@ -67,6 +83,11 @@ void mousePressed(MouseEvent e) {
         if (placingTrack != null) {
             curLayer.tracks.remove(placingTrack);
             placingTrack = null;
+        }
+        
+        if(placingComponent != null){
+            curLayer.components.remove(placingComponent);
+            placingComponent = null;
         }
     }
 
@@ -143,7 +164,7 @@ void mouseWheel(MouseEvent e) {
 }
 
 void keyPressed() {
-    
+
     if (key == CODED) {
         switch(keyCode) {
         case UP:
@@ -202,6 +223,8 @@ void keyPressed() {
         case '3':
             changeTool(Tool.Text);
             break;
+        case '4':
+            setDialogue(2);
         case ' ':
         }
     }
@@ -245,7 +268,6 @@ void keyReleased() {
         case 'D':
             movePressed[3] = false;
             break;
-        
         }
     }
 }

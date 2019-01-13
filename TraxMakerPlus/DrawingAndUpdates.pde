@@ -3,9 +3,9 @@ PImage NLIcon, DLIcon, ELIcon;
 PImage NLHighlight, DLHighlight, ELHighlight;
 int NLFrames, DLFrames, ELFrames;
 
-void updateView() {
-    float factor = 30 / frameRate;
-    
+void updateView() {//Changes the curView to shift the position of the viewport.
+    float factor = 30 / frameRate; //slower framerates will not affect the speed of panning
+
     if (movePressed[0]) {
         curView.y += panSpeed * factor;
     }
@@ -25,9 +25,9 @@ void updateView() {
 //======================================================================================
 
 void drawReferencePoints() { //Draws points to signify each inch
-    int minX, minY;
+    int minX, minY; //Starting points for the dots
     stroke(150);
-    strokeWeight(4/viewScale);
+    strokeWeight(4/viewScale); //Dots will always be the same size
     if (curView.x >= 0) {
         minX = 0;
         while (minX < curView.x/viewScale)
@@ -48,26 +48,26 @@ void drawReferencePoints() { //Draws points to signify each inch
             minY -= 1000;
     }
 
-    //println(minY, minX, curView);
-
-    minX *= -1;
+    minX *= -1;//curView is negative values
     minY *= -1;
 
     for (int x = minX; x < (width - curView.x) / viewScale; x += 1000)
         for (int y = minY; y < (height - curView.y)/viewScale; y += 1000)
-            point(x, y);
+            point(x, y); //Draws points at every 1000 x and 1000 y
 }
 
 //======================================================================================
 //======================================================================================
 //======================================================================================
 
-void drawLayers() {
+void drawLayers() { //Draws Tracks, Components, and text for each layer
     for (int i = 0; i < layers.size(); i++) {
-        try {
-            if (layers.get(i).isVisible) {
-                layers.get(i).drawTracks();
-                layers.get(i).drawComponents();
+        try {//In case the sizes get updated during drawing;
+            Layer l = layers.get(i);
+            if (l.isVisible) {
+                l.drawTracks();
+                l.drawComponents();
+                l.drawTexts();
             }
         } 
         catch(IndexOutOfBoundsException e) {
@@ -83,16 +83,15 @@ void drawLayers() {
 void updateSelected() {
 }
 
-void updatePlacing() {
+void updatePlacingTrack() { //Updates the current track that is being placed
     if (placingTrack == null) return;
-    LineSegment p = (LineSegment)placingTrack;
-    //p.points[1].set(mouseX*viewScale + curView.x, mouseY * viewScale + curView.y );
+    LineSegment p = placingTrack;
     PVector m = getRelativeMouse();
-    p.points[1].set(m.x, m.y);
+    p.points[1].set(m.x, m.y); //Starts off by putting end to the mouse point
 
     PVector ps = new PVector();
 
-    if (AngleSnap.curSnap == AngleSnap.Perpendicular) {
+    if (AngleSnap.curSnap == AngleSnap.Perpendicular) { //Only allow either x or y to be difference from the starting point
         if (abs(p.points[0].x - m.x) >= abs(p.points[0].y - m.y)) {
             ps.set(m.x, p.points[0].y);
         } else {
@@ -100,8 +99,38 @@ void updatePlacing() {
         }
 
         snapPoint = null;
+    } else if (AngleSnap.curSnap == AngleSnap.Angular) { //Allows only certain angles to starting point;
+        float angle;
+        try {
+            angle = degrees(atan((m.y - p.points[0].y) / (m.x - p.points[0].x))); //Finds angle
+        } 
+        catch(ArithmeticException e) {
+            if (m.y - p.points[0].y > 0) angle = 90;
+            else angle = 270;
+        }
+        float a = radians(round(angle / snapAngle) * snapAngle); //Gets closest Angle to the angle to mouse
+        float d = dist(m.x, m.y, p.points[0].x, p.points[0].y) * 2;
+        int dir = (m.x - p.points[0].x > 0)?1:-1;
+        PVector p2 = new PVector(p.points[0].x + d * cos(a) * dir, p.points[0].y + d * sin(a) * dir); //Makes a point in the distance at the closest angle
+        LineSegment temp = new LineSegment(p.points[0].copy(), p2); //Temporary line segment at the angle
+        ps = temp.intersect(m); //Intersects temporary line to get closest point
+
+        //Draws possible angles
+        for (int i = 0; i < 360; i+=snapAngle) {
+            PVector t = p.points[0];
+            float a2 = radians(i);
+            PVector p3 = new PVector(t.x + (100/viewScale)*cos(a2), t.y + (100/viewScale)*sin(a2));
+            LineSegment temp2 = new LineSegment(t, p3, 5 / viewScale);
+            pushMatrix();
+            stroke(0);
+            translate(curView.x, curView.y);
+            scale(viewScale);
+            temp2.display();
+            popMatrix();
+        }
     } else ps = null;
 
+    //Finds snapping point relative to the nearby line segments.
     PVector psT = (Snap.curSnap == Snap.Perpendicular)? findSnapPoint(p.points[0]):findSnapPoint(m);
     if (psT != null)
         ps = psT;
@@ -112,6 +141,27 @@ void updatePlacing() {
     if (ps != null) {
         p.points[1] = ps;
     }
+}
+
+void updatePlacingText() {
+    if (placingText == null) return;
+    PVector mouse = getRelativeMouse();
+    placingText.base.set(mouse.x, mouse.y);
+}
+
+void updatePlacingComp() {
+    if (placingComponent != null) {
+        PVector m = getRelativeMouse();
+        Component pC = placingComponent;
+        if (isInViewport())
+            pC.loc = new PVector(m.x - pC.basePoints[0].x, m.y - pC.basePoints[0].y);
+    }
+}
+
+void updatePlacing() {
+    updatePlacingTrack();
+    updatePlacingText();
+    updatePlacingComp();
 }
 
 void drawSnapPoint(PVector p) {
@@ -293,6 +343,11 @@ void fitBoardToView() {
         yMin = ls.points[0].y;
         yMax = ls.points[0].y;
     } else if (l0.components.size()>0) {
+        Component c = l0.components.get(0);
+        xMin = c.loc.x;
+        xMax = c.loc.x;
+        yMin = c.loc.y;
+        yMax = c.loc.y;
     } else {
         Text t = l0.texts.get(0);
         xMin = t.base.x;
@@ -300,8 +355,6 @@ void fitBoardToView() {
         yMin = t.base.y;
         yMax = t.base.y;
     }
-
-    //println("Starting:", xMin, xMax, yMin, yMax);
 
     for (int i = 0; i < layers.size(); i++) {
         Layer l = layers.get(i);
@@ -319,6 +372,14 @@ void fitBoardToView() {
             else if (y2 < yMin) yMin = y2;
         }
         for (int k = 0; k < l.components.size(); k++) {
+            Component c = l0.components.get(0);
+            for (int m = 0; m < c.basePoints.length; m++) {
+                float x1 = c.loc.x + c.basePoints[m].x, y1 = c.loc.y + c.basePoints[m].y;
+                if (x1 > xMax) xMax = x1;
+                else if (x1 < xMin) xMin = x1;
+                if (y1 > yMax) yMax = y1;
+                else if (y1 < yMin) yMin = y1;
+            }
         }
         for (int k = 0; k < l.texts.size(); k++) {
             Text t = l.texts.get(i);
@@ -358,7 +419,7 @@ void drawLayerManager() {
     strokeWeight(3);
     fill(230);
     rect(width - 160, 72, 160, height - 154);
-    
+
     fill(180);
     textSize(36);
     pushMatrix();
@@ -366,8 +427,8 @@ void drawLayerManager() {
     rotate(HALF_PI);
     text("Layers", 0, 0);
     popMatrix();
-    
-    
+
+
     textSize(16);
     fill(0);
     textAlign(LEFT);
@@ -415,9 +476,9 @@ void drawLayerManager() {
             x++;
         }
     }
-    
+
     fill(0);
-    if(moveToInd - movingLayerInd  > 1 || moveToInd - movingLayerInd  < 0){
+    if (moveToInd - movingLayerInd  > 1 || moveToInd - movingLayerInd  < 0) {
         line(width - 150, height - 90 - 20*moveToInd, width, height - 90 - 20*moveToInd);
     }
 

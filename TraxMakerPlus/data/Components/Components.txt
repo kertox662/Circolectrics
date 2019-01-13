@@ -1,0 +1,12 @@
+Two Pad
+Two Pad Short
+Three Pad
+Eight Pin
+Fourteen Pin
+Sixteen Pin
+Eighteen Pin
+Forty Pin
+LCD
+Variable Resistor
+Power 4
+Power 6

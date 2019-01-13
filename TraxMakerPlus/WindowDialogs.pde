@@ -27,7 +27,6 @@ void setDialogue(int x) {
         return;
     }
 
-    
 
     if (x == 0) { //New File Window
         nfWin.setupWin();
@@ -35,6 +34,7 @@ void setDialogue(int x) {
         cText.setupWin();
     } else if (x == 2) { //Add Component
         cComp.setupWin();
+        return;
     } else if (x == 3) { //Edit Layer
         lOptions.setupWin();
     } else if (x == 4) { //Delete Layer
@@ -170,7 +170,6 @@ void submitNF(GButton b, GEvent e) {
             makeNewFile();
     } else makeNewFile();
     setDialogue(-1);
-    
 }
 
 void cancelNF(GButton b, GEvent e) {
@@ -182,28 +181,253 @@ void cancelNF(GButton b, GEvent e) {
 //======================================================================================
 
 class createTextDialogue {
+    GTextField text, size;
+    GButton accept, cancel;
+    GLabel textL, sizeL;
+
     createTextDialogue() {
+        textL = new GLabel(window, 5, 10, 80, 20);
+        textL.setText("Display Text");
+        textL.setOpaque(true);
+        sizeL = new GLabel(window, 95, 10, 80, 20);
+        sizeL.setText("Font Size");
+        sizeL.setOpaque(true);
+
+        text =  new GTextField(window, 5, 35, 80, 20, G4P.SCROLLBARS_NONE);
+        text.addEventHandler(main, "updateEditTextC");
+        size = new GTextField(window, 95, 35, 80, 20, G4P.SCROLLBARS_NONE);
+        size.addEventHandler(main, "updateEditSizeC");
+
+        accept = new GButton(window, 5, 70, 50, 20);
+        accept.setText("Accept");
+        accept.addEventHandler(main, "submitText");
+        cancel = new GButton(window, 60, 70, 50, 20);
+        cancel.setText("Cancel");
+        cancel.addEventHandler(main, "submitText");
     }
 
     void setupWin() {
+        dialogueSurface.setSize(200, 100);
+        dialogueSurface.setTitle("Create Text");
+
+        text.setText("Text");
+        size.setText("12");
+
+        text.setVisible(true);
+        size.setVisible(true);
+        accept.setVisible(true);
+        cancel.setVisible(true);
+        textL.setVisible(true);
+        sizeL.setVisible(true);
     }
 
     void cleanupWin() {
+        text.setVisible(false);
+        size.setVisible(false);
+        accept.setVisible(false);
+        cancel.setVisible(false);
+        textL.setVisible(false);
+        sizeL.setVisible(false);
     }
+}
+
+void submitText(GButton b, GEvent e) {
+    if (b != cText.accept) {
+        curLayer.texts.remove(editText);
+    }
+    editText = null;
+    placingText = null;
+    setDialogue(-1);
+}
+
+void updateEditTextC(GTextField s, GEvent e) {
+    editText.setText(s.getText());
+}
+
+void updateEditSizeC(GTextField s, GEvent e) {
+    float size = float(s.getText());
+    if (!Float.isNaN(size))
+        println(size);
+    editText.setSize(int(size));
 }
 
 //======================================================================================
 //======================================================================================
 //======================================================================================
 
-class chooseComponentDialogue {
+class chooseComponentDialogue extends PApplet {
+    boolean isRunning;
+    int chosenIndex = 0, imageIndex = 0;
+    float scale = 1;
+
     chooseComponentDialogue() {
+        run();
+        isRunning = true;
+    }
+
+    void settings() {
+        size(400, 600);
+    }
+
+
+    void setup() {
+        surface.setTitle("Choose Component");
+        surface.setVisible(false);
+        imageMode(CENTER);
+        changeScale();
+    }
+
+    void draw() {
+        //if (focused == true) {
+            background(210);
+            strokeWeight(2);
+            stroke(0);
+            fill((overButton() == 1)?color(100, 200, 100):255);
+            rect(20, 570, 70, 20);
+            fill((overButton() == 2)?color(100, 200, 100):255);
+            rect(100, 570, 70, 20);
+            drawBoxes();
+            drawComponentNames();
+            drawImageNames();
+            previewComp();
+
+            textAlign(CENTER);
+            fill(0);
+            text("Accept", 20, 572, 70, 20);
+            text("Cancel", 100, 572, 70, 20);
+        //} else{
+        //    setVisible(false);
+        //}
+    }
+
+    void drawComponentNames() {
+        textAlign(LEFT);
+        for (int i = 0; i < masterComponents.length; i++) {
+            if (i == chosenIndex) {
+                fill(180);
+                noStroke();
+                rect(9, 30 + i*20, 173, 20);
+            }
+            fill(0);
+            stroke(0);
+            text("COMPONENT TYPE", 10, 22);
+            text(masterComponents[i].name, 10, 42 + i*20);
+        }
+    }
+
+    void drawImageNames() {
+        textAlign(LEFT);
+        for (int i = 0; i < masterComponents[chosenIndex].imageNames.length; i++) {
+            if (i == imageIndex) {
+                fill(180);
+                noStroke();
+                rect(194, 435 + i*20, 194, 20);
+            }
+            fill(0);
+            stroke(0);
+            text("COMPONENT IMAGE", 195, 430);
+            text(masterComponents[chosenIndex].imageNames[i], 195, 450 + i*20);
+        }
+    }
+
+    void changeComponentIndex() {
+        int newInd = (mouseY - 30) / 20;
+        if (!(newInd >= masterComponents.length || newInd < 0)) { 
+            chosenIndex = newInd;
+            imageIndex = 0;
+            changeScale();
+        }
+    }
+
+    void changeImageIndex() {
+        int newInd = (mouseY - 435) / 20;
+        if (!(newInd >= masterComponents[chosenIndex].imageNames.length || newInd < 0)) { 
+            imageIndex = newInd;
+            changeScale();
+        }
+    }
+
+    void changeScale() {
+        Component c = masterComponents[chosenIndex];
+        float xScale = 190.0 / c.w, yScale = 390.0 / c.h;
+        //println(xScale, yScale);
+        scale = (xScale > yScale)?yScale:xScale;
+    }
+
+    void previewComp() {
+        pushMatrix();
+        translate(290, 202);
+        scale(scale);
+        //println(scale);
+        masterComponents[chosenIndex].displayPreview(imageIndex);
+        popMatrix();
+    }
+
+    void polygon(float x, float y, float radius, int npoints) {
+        float angle = TWO_PI / npoints;
+        beginShape();
+        for (float a = angle / 2; a < TWO_PI + angle; a += angle) {
+            float sx = x + cos(a) * radius;
+            float sy = y + sin(a) * radius;
+            vertex(sx, sy);
+        }
+        endShape(CLOSE);
+    }
+
+
+    void drawBoxes() {
+        fill(255);
+        stroke(0);
+        rect(5, 5, 180, 545);
+        rect(190, 5, 200, 400);
+        rect(190, 410, 200, 140);
+    }
+
+    void setVisible(boolean b) {
+        surface.setVisible(b);
+    }
+
+    void run() {
+        PApplet.runSketch(new String[]{"Choose Color"}, this);
+    }
+
+    void exit() {
+        isRunning = false;
+    }
+
+    void mousePressed(MouseEvent e) {
+        if (overButton() != 0) cleanupWin();
+        if (isInNameBox()) changeComponentIndex();
+        if (isInImageBox()) changeImageIndex();
     }
 
     void setupWin() {
+        surface.setVisible(true);
     }
 
     void cleanupWin() {
+        if (overButton() == 1) {
+            Component c = masterComponents[chosenIndex].copy();
+            c.img = masterComponents[chosenIndex].possibleImages[imageIndex].copy();
+            curLayer.components.add(c);
+            placingComponent = c;
+        }
+        surface.setVisible(false);
+        chosenIndex = 0;
+    }
+
+    int overButton() {
+        if (mouseX >= 20 && mouseX <= 90) if (mouseY >= 570 && mouseY <= 590) return 1;
+        if (mouseX >= 100 && mouseX <= 170) if (mouseY >= 570 && mouseY <= 590) return 2;
+        return 0;
+    }
+
+    boolean isInNameBox() {
+        return (mouseX >= 5 && mouseX <= 185 && mouseY >= 5 && mouseY <= 550);
+    }
+
+    boolean isInImageBox() {
+        return (mouseX >= 190 && mouseX <= 390 && mouseY >= 410 && mouseY <= 550);
     }
 }
 
@@ -228,14 +452,14 @@ class layerOptionsDialogue {
 
         name = new GTextField(window, 5, 10, 150, 20);
         name.setText(layers.get(changeIndex).name);
-        
+
         thickInfo = new GLabel(window, 5, 35, 100, 20);
         thickInfo.setText("Track Thickness");
         thickInfo.setOpaque(true);
-        
+
         thickness = new GTextField(window, 5, 60, 100, 20);
         thickness.setText("0");
-        
+
         accept = new GButton(window, 5, 110, 60, 20);
         accept.setText("Accept");
         accept.addEventHandler(main, "submitLO");
@@ -247,7 +471,7 @@ class layerOptionsDialogue {
 
     void setupWin() {
         dialogueSurface.setSize(200, 135);
-        
+
         if (isInManager())
             changeIndex = (height - 86 - mouseY + managerScrolled)/20;
         else
@@ -255,14 +479,13 @@ class layerOptionsDialogue {
         check.setSelected(curLayer.isVisible);
         name.setText(layers.get(lOptions.changeIndex).name);
         thickness.setText(str(layers.get(lOptions.changeIndex).defaultThickness));
-        
+
         check.setVisible(true);
         name.setVisible(true);
         accept.setVisible(true);
         cancel.setVisible(true);
         thickInfo.setVisible(true);
         thickness.setVisible(true);
-        
     }
 
     void cleanupWin() {
@@ -283,7 +506,7 @@ void submitLO(GButton b, GEvent e) {
         l.name = lOptions.name.getText();
         l.isVisible = lOptions.check.isSelected();
         float t = float(lOptions.thickness.getText());
-        if(!Float.isNaN(t))
+        if (!Float.isNaN(t))
             l.setThickness(t);
     }
 
@@ -334,7 +557,7 @@ void dlSubmit(GButton b, GEvent e) {
         layers.remove(curLayer);
         curLayer = layers.get(min(i, layers.size() - 1 ));
     }
-    
+
     setDialogue(-1);
 }
 
@@ -414,8 +637,8 @@ class chooseColorDialogue extends PApplet {
         for (int i = 0; i < colors.length; i++) {
             fill(colors[i]);
             stroke(0);
-            if (index == i) stroke(100, 200, 100);
             if (curLayer.colorIndex == i) stroke(255, 200, 100);
+            if (index == i) stroke(100, 200, 100);
             rect(35 + 40*(i%5), 25 + 40*(i/5), 30, 30);
         }
 
