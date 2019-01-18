@@ -65,8 +65,11 @@ void drawLayers() { //Draws Tracks, Components, and text for each layer
         try {//In case the sizes get updated during drawing;
             Layer l = layers.get(i);
             if (l.isVisible) {
-                l.drawTracks();
+                if (!l.drawTracksOnTop)
+                    l.drawTracks();
                 l.drawComponents();
+                if (l.drawTracksOnTop)
+                    l.drawTracks();
                 l.drawTexts();
             }
         } 
@@ -74,6 +77,26 @@ void drawLayers() { //Draws Tracks, Components, and text for each layer
             e.printStackTrace();
         }
     }
+}
+
+//======================================================================================
+//======================================================================================
+//======================================================================================
+
+
+void drawSelected() {
+    stroke(255);
+    try {
+        for (int i = 0; i < selectedTrack.size(); i++) {
+            selectedTrack.get(i).display();
+        }
+        for (int i = 0; i < selectedComponent.size(); i++) {
+            selectedComponent.get(i).display(color(255), true);
+        }
+        for (int i = 0; i < selectedText.size(); i++) {
+            selectedText.get(i).display(color(255));
+        }
+    } catch (Exception e){}
 }
 
 //======================================================================================
@@ -100,15 +123,7 @@ void updatePlacingTrack() { //Updates the current track that is being placed
 
         snapPoint = null;
     } else if (AngleSnap.curSnap == AngleSnap.Angular) { //Allows only certain angles to starting point;
-        float angle;
-        try {
-            angle = degrees(atan((m.y - p.points[0].y) / (m.x - p.points[0].x))); //Finds angle
-        } 
-        catch(ArithmeticException e) {
-            if (m.y - p.points[0].y > 0) angle = 90;
-            else angle = 270;
-        }
-        float a = radians(round(angle / snapAngle) * snapAngle); //Gets closest Angle to the angle to mouse
+        float a = getClosestSnappedAngle(m, p.points[0]);
         float d = dist(m.x, m.y, p.points[0].x, p.points[0].y) * 2;
         int dir = (m.x - p.points[0].x > 0)?1:-1;
         PVector p2 = new PVector(p.points[0].x + d * cos(a) * dir, p.points[0].y + d * sin(a) * dir); //Makes a point in the distance at the closest angle
@@ -142,6 +157,8 @@ void updatePlacingTrack() { //Updates the current track that is being placed
         p.points[1] = ps;
     }
 }
+
+
 
 void updatePlacingText() {
     if (placingText == null) return;
@@ -309,7 +326,7 @@ void drawInfo() {
     text("X:" + str(round((mouseX - curView.x)/viewScale)) + " Y:" + str(round((mouseY - curView.y) / viewScale)), 5, 52);
     text("Scale: " + str(roundAny(viewScale * 100, 1) ) + "%", 5, 65);
     text("Framerate: " + str(roundAny(frameRate, 2)), 5, 39);
-    textAlign(CENTER);
+    textAlign(CENTER, CENTER);
 }
 
 //======================================================================================
@@ -372,7 +389,7 @@ void fitBoardToView() {
             else if (y2 < yMin) yMin = y2;
         }
         for (int k = 0; k < l.components.size(); k++) {
-            Component c = l0.components.get(0);
+            Component c = l0.components.get(k);
             for (int m = 0; m < c.basePoints.length; m++) {
                 float x1 = c.loc.x + c.basePoints[m].x, y1 = c.loc.y + c.basePoints[m].y;
                 if (x1 > xMax) xMax = x1;
@@ -382,7 +399,7 @@ void fitBoardToView() {
             }
         }
         for (int k = 0; k < l.texts.size(); k++) {
-            Text t = l.texts.get(i);
+            Text t = l.texts.get(k);
             float x1 = t.base.x, y1 = t.base.y;
             if (x1 > xMax) xMax = x1;
             else if (x1 < xMin) xMin = x1;
@@ -531,4 +548,24 @@ boolean isInViewport() {
 void defineViewPortSize() {
     viewPortMin.set( -curView.x/viewScale, -curView.y/viewScale);
     viewPortMax.set((width - curView.x)/viewScale, (height - curView.y) / viewScale);
+}
+
+
+//======================================================================================
+//======================================================================================
+//======================================================================================
+
+void drawSelectBox() {
+    if (selectBoxStart != null && selectBoxEnd != null) {
+        rectMode(CORNERS);
+        PVector a = selectBoxStart, b = selectBoxEnd;
+        noFill();
+        stroke(0);
+        strokeWeight(5/viewScale);
+        pushMatrix();
+        //scale(1/viewScale);
+        rect(a.x, a.y, b.x, b.y);
+        popMatrix();
+        rectMode(CORNER);
+    }
 }

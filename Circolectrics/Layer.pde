@@ -8,9 +8,10 @@ class Layer {
     int colorIndex;
     String name;
     boolean isVisible = true;
+    boolean drawTracksOnTop = false;
+    boolean tintComponents = true;
 
     int padShape = 8, padSize = 72;
-    boolean doTint = true;
 
     Layer(float dt) {
         tracks = new ArrayList<LineSegment>();
@@ -61,9 +62,10 @@ class Layer {
         for (int i = 0; i < tracks.size(); i++) {
             try {
                 LineSegment ls = tracks.get(i);
-                //strokeWeight(ls.thickness*viewScale);
+                //if(selectedTrack.contains(ls)) 
+                //    stroke(255);
+                //else
                 stroke(ccD.colors[colorIndex]);
-                //if(ls.isInViewPort())
                 ls.display();
             } 
             catch(IndexOutOfBoundsException e) {
@@ -74,10 +76,7 @@ class Layer {
     void drawComponents() {
         for (int i = 0; i < components.size(); i++) {
             try {
-                if (doTint)
-                    components.get(i).display(ccD.colors[colorIndex]);
-                else
-                    components.get(i).display();
+                components.get(i).display(ccD.colors[colorIndex], tintComponents);
             } 
             catch(IndexOutOfBoundsException e) {
             }

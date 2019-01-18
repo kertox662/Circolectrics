@@ -16,9 +16,13 @@ import java.lang.System; //Nanotime, Temporary
 //============================================================================================================================================================================
 
 //Edit Fields
-LineSegment selectedTrack, placingTrack; //Objects that hold temporary access to linesegment objects that are currently being edited
-Text selectedText, placingText, editText; //Same as tracks, but for text
-Component placingComponent, selectedComponent, editComponent;//Same as tracks, but for components
+LineSegment placingTrack; //Objects that hold temporary access to linesegment objects that are currently being edited
+Text placingText, editText; //Same as tracks, but for text
+Component placingComponent, editComponent;//Same as tracks, but for components
+
+ArrayList<LineSegment> selectedTrack;
+ArrayList<Component> selectedComponent;
+ArrayList<Text> selectedText;
 
 Layer curLayer; //Keeps track of the current selected layer
 ArrayList<Layer> layers; //List of all of the layers
@@ -26,6 +30,7 @@ ArrayList<Layer> layers; //List of all of the layers
 //Viewport Fields
 PVector curView; //Offset from the screen
 boolean[] movePressed; //{'W', 'A', 'S', 'D'} || {UP, LEFT, DOWN, UP}
+boolean shiftDown;
 float panSpeed = 8; //Speed of offset movement
 float viewScale = 1; //Global scale when drawing in the viewport
 boolean invertedScroll = false; //
@@ -39,10 +44,14 @@ int[] iconOffset; //The offset for each tool. This will display the tool shifted
 final int minIconOffset = -15, maxIconOffset = 37; //Offest values to target when going up or down
 int offsetIncSpeed = 6; //The rate at which offset values are increased or decreased
 
+//Selection
+PVector selectBoxStart, selectBoxEnd;
+
+
 //Snapping
 PVector snapPoint; //Global snapping point value
 int snapAngle = 30; //Angle to snap to when the angle snapping mode is "Angular"
-final int snapDist = 20; //Distance to snap at
+final int snapDist = 20; //Distance at which to initiate snap
 
 //File Icons
 final int minFileOffset = -15; //Same thing as iconOffset with their min and max
@@ -83,7 +92,7 @@ void setup() {
     frameRate(30);
     
     surface.setResizable(true);
-    surface.setTitle("Traxmaker Plus");
+    surface.setTitle("Circolectrics");
     G4P.messagesEnabled(false);
     //=====================================
     //============LAYER SETUP==============
@@ -153,9 +162,12 @@ void setup() {
     //=====================================
     //============Miscellaneous============
     //=====================================
+    selectedTrack = new ArrayList<LineSegment>();
+    selectedComponent = new ArrayList<Component>();
+    selectedText = new ArrayList<Text>();
     
     imageMode(CENTER);
-    textAlign(CENTER);
+    textAlign(CENTER,CENTER);
     blendMode(REPLACE);
     
     
@@ -185,12 +197,14 @@ void updateApp() { //Updates the app values
 void drawApp() { //Draws the elements of the app
     //Viewport Stuff
     pushMatrix();
-    translate(curView.x, curView.y);
-    scale(viewScale);
-    drawReferencePoints();
-    drawLayers();
-    if (snapPoint != null)
-        drawSnapPoint(snapPoint);
+        translate(curView.x, curView.y);
+        scale(viewScale);
+        drawReferencePoints();
+        drawLayers();
+        drawSelected();
+        if (snapPoint != null)
+            drawSnapPoint(snapPoint);
+        drawSelectBox();
     popMatrix();
     //UI Stuff
     drawLayerManager();

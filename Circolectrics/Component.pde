@@ -6,6 +6,8 @@ class Component {
     float rotation;
     int w, h; //Width and Height
 
+    PVector c1, c2, c3, c4,c5;
+
     color tinted;
     String defaultImage; //Path to default image
     PImage[] possibleImages; //For master components to store images
@@ -31,8 +33,7 @@ class Component {
         popMatrix();
     }
 
-    void display(color c) { //Display but with a tinted image
-        println(-curView.x/viewScale > loc.x + w/2 , (-curView.x + width)/viewScale < loc.x - w/2 , -curView.y/viewScale > loc.y + h/2 , (-curView.y + height)/viewScale < loc.y - h/2);
+    void display(color c, boolean b) { //Display but with a tinted image
         if (-curView.x/viewScale > loc.x + w/2 || (-curView.x + width)/viewScale < loc.x - w/2 || -curView.y/viewScale > loc.y + h/2 || (-curView.y + height)/viewScale < loc.y - h/2) {
             return;
         }
@@ -44,7 +45,10 @@ class Component {
             imgTinted = switchColor(img, c);
             tinted  = c;
         }
-        image(imgTinted, 0, 0);
+        if(b)
+            image(imgTinted, 0, 0);
+        else
+            image(img, 0, 0);
         for (int i = 1; i < basePoints.length; i++) {
             PVector p = basePoints[i];
             fill(c);
@@ -53,8 +57,8 @@ class Component {
             polygon(p.x, p.y, (i == 1 && basePoints.length > 3)? 36*sqrt(2):36, ((i == 1 && basePoints.length > 3)? 4:8));
             fill(255);
             ellipse(p.x, p.y, 36, 36);
+            
         }
-
         popMatrix();
     }
 
@@ -116,6 +120,32 @@ class Component {
     void setImage(String s) {
         PImage temp = loadImage(s);
         if (temp != null) img = temp;
+    }
+    
+    boolean isInsideImage(PVector m){
+        float iW = img.width, iH = img.height;
+        float c = cos(rotation), s = sin(rotation);
+        float cr = cos(-rotation), sr = sin(-rotation);
+        
+        m.x -= loc.x;
+        m.y -= loc.y;
+        
+        PVector mouseRot = new PVector((m.x*cr - m.y*sr) + loc.x, (m.x*sr + m.y*cr) + loc.y);
+        
+        m.x += loc.x;
+        m.y += loc.y;
+        
+        if(mouseRot.x >= loc.x - iW/2 && mouseRot.x <= loc.x + iW/2)
+            if(mouseRot.y >= loc.y - iH/2 && mouseRot.y <= loc.y + iH/2)
+                return true;
+        
+        return false;
+    }
+    
+    boolean shouldSelect(){
+        
+        
+        return true;
     }
 }
 

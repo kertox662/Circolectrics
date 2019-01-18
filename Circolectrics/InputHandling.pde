@@ -1,20 +1,20 @@
 void mousePressed(MouseEvent e) {
     if (mouseButton == LEFT) {
+        setDialogue(-1);
         if (isInViewport()) { //If On Main Track
             if (Tool.curTool == Tool.Track) {//Track Tool
-                if (placingTrack == null && selectedTrack == null) { //
+                if (placingTrack == null) { //
                     PVector p0 = findSnapPoint(new PVector((mouseX - curView.x)/viewScale, (mouseY - curView.y) / viewScale));
                     p0 = (p0 == null)? new PVector((mouseX - curView.x)/viewScale, (mouseY - curView.y) / viewScale): p0;
                     placingTrack = new LineSegment(p0, new PVector((mouseX - curView.x)/viewScale, (mouseY - curView.y) / viewScale));
                     curLayer.addTrack(placingTrack);
-                } else if (selectedTrack == null) {
-                    placingTrack.setSlope();
+                } else {
                     placingTrack = null;
                 }
             } else if (Tool.curTool == Tool.Text) {
                 if (placingText == null) {
                     PVector mouse = getRelativeMouse();
-                    placingText = new Text("Text", 12, mouse);
+                    placingText = new Text("Text", 28, mouse);
                     curLayer.texts.add(placingText);
                 } else {
                     editText = placingText;
@@ -24,23 +24,90 @@ void mousePressed(MouseEvent e) {
             } else if (Tool.curTool == Tool.Component) {
                 if (placingComponent == null) {
                     setDialogue(2);
-                } else{
-                    placingComponent = null;
+                } else {
+                    //placingComponent = null;
+                    //setDialogue(-1);
+                    curLayer.addComponent(placingComponent.copy());
+                }
+            } else if (Tool.curTool == Tool.Select) {
+                PVector m = getRelativeMouse();
+                selectBoxStart = m.copy();
+                for (int i = 0; i < layers.size(); i++) {
+                    Layer l = layers.get(i);
+
+                    if (!shiftDown) {
+                        selectedText.clear();
+                        selectedComponent.clear();
+                        selectedTrack.clear();
+                    }
+
+                    for (int j = 0; j < l.texts.size(); j++) {
+                        Text t = l.texts.get(j);
+                        textSize(t.fontSize);
+                        float wT = textWidth(t.text)/2;
+                        if (m.x >= t.base.x - wT && m.x <= t.base.x + wT)
+                            if (m.y >= t.base.y - t.fontSize/2 - (10/28) * t.fontSize && m.y <= t.base.y + t.fontSize/2 - (10/28) * t.fontSize) {
+                                if (shiftDown) {
+                                    if (selectedText.contains(t)) 
+                                        selectedText.remove(t);
+                                    else 
+                                    selectedText.add(t);
+                                } else {
+                                    selectedText.clear();
+                                    selectedComponent.clear();
+                                    selectedTrack.clear();
+                                    selectedText.add(t);
+                                }
+                            }
+                    }
+
+                    for (int j = 0; j < l.tracks.size(); j++) {
+                        LineSegment ls = l.tracks.get(j);
+                        if (ls.distToLine(m) <= ls.thickness/2) {      
+                            if (shiftDown) {
+                                if (selectedTrack.contains(ls)) selectedTrack.remove(ls);
+                                else selectedTrack.add(ls);
+                            } else {
+                                selectedTrack.clear();
+                                selectedComponent.clear();
+                                selectedText.clear();
+                                selectedTrack.add(ls);
+                            }
+                        }
+                    }
+
+                    for (int j = 0; j < l.components.size(); j++) {
+                        Component c = l.components.get(j);
+                        if (c.isInsideImage(m)) {
+                            if (shiftDown) {
+                                if (selectedComponent.contains(c)) selectedComponent.remove(c);
+                                else selectedComponent.add(c);
+                            } else {
+                                selectedComponent.clear();
+                                selectedTrack.clear();
+                                selectedText.clear();
+                                selectedComponent.add(c);
+                            }
+                        }
+                    }
                 }
             }
         } else if (isInToolBox()) {
+            resetElements();
             for (int i = 0; i < Tool.toolName.length; i++) {
                 if (dist(mouseX, mouseY, iconOffset[i], 100 + i*60) <= 25) {
                     changeTool(Tool.values()[i]);
                 }
             }
         } else if (isInSnapBox()) {
+            resetElements();
             if (dist(mouseX, mouseY, width - 40, height - 50) <= 25)
                 AngleSnap.nextSnap();
             else if (dist(mouseX, mouseY, width - 110, height - 50) <= 25) {
                 Snap.nextSnap();
             }
         } else if (isInFileBox()) {
+            resetElements();
             if (dist(mouseX, mouseY, fileIconLoc[0].x, fileIconLoc[0].y) <= 25) {
                 setDialogue(0);
             } else if (dist(mouseX, mouseY, fileIconLoc[1].x, fileIconLoc[1].y) <= 25) {
@@ -49,6 +116,7 @@ void mousePressed(MouseEvent e) {
                 selectOutput("Save File", "saveToFile");
             }
         } else if (isInManager()) {
+            resetElements();
             int index = (height - 96 - mouseY + managerScrolled)/20;
             movingLayerInd = index;
             moveToInd = (height - 86 - mouseY + managerScrolled)/20;
@@ -66,9 +134,11 @@ void mousePressed(MouseEvent e) {
                 setDialogue(3);
             }
         } else if (isInLayerTab()) {
+            resetElements();
             if (dist(mouseX, mouseY, width - 130, 88) <= 20) {
                 Layer l = new Layer(curLayer.defaultThickness);
                 layers.add(l);
+                curLayer = l;
                 NLFrames = 3;
             } else if (dist(mouseX, mouseY, width - 80, 88) <= 20) {
                 setDialogue(3);
@@ -84,8 +154,8 @@ void mousePressed(MouseEvent e) {
             curLayer.tracks.remove(placingTrack);
             placingTrack = null;
         }
-        
-        if(placingComponent != null){
+
+        if (placingComponent != null) {
             curLayer.components.remove(placingComponent);
             placingComponent = null;
         }
@@ -114,11 +184,24 @@ void mouseDragged() {
         if (Tool.curTool == Tool.Pan) {
             curView.x += (mouseX - pmouseX);
             curView.y += (mouseY - pmouseY);
+        } else if (Tool.curTool == Tool.Rotate) {
+            for (int i = 0; i < selectedComponent.size(); i++) {
+                selectedComponent.get(i).rotation += (mouseX - pmouseX)*0.02;
+            }
+        } else if (Tool.curTool == Tool.Select) {
+            selectBoxEnd = getRelativeMouse();
         }
     } 
     if (isInManager()) {
         int index = (height - 86 - mouseY + managerScrolled)/20;
         moveToInd = min(index, layers.size());
+    }
+}
+
+void mouseReleased(MouseEvent e) {
+    if (mouseButton == LEFT) {
+        selectBoxStart = null;
+        selectBoxEnd = null;
     }
 }
 
@@ -179,25 +262,28 @@ void keyPressed() {
         case RIGHT:
             movePressed[3] = true;
             break;
+        case SHIFT:
+            shiftDown = true;
+            break;
         }
     } else {
         switch(key) {
-        case 'w':
-        case 'W':
-            movePressed[0] = true;
-            break;
-        case 'a':
-        case 'A':
-            movePressed[1] = true;
-            break;
-        case 's':
-        case 'S':
-            movePressed[2] = true;
-            break;
-        case 'd':
-        case 'D':
-            movePressed[3] = true;
-            break;
+            //case 'w':
+            //case 'W':
+            //    movePressed[0] = true;
+            //    break;
+            //case 'a':
+            //case 'A':
+            //    movePressed[1] = true;
+            //    break;
+            //case 's':
+            //case 'S':
+            //    movePressed[2] = true;
+            //    break;
+            //case 'd':
+            //case 'D':
+            //    movePressed[3] = true;
+            //    break;
         case 'r':
         case 'R':
             changeTool(Tool.Rotate);
@@ -249,25 +335,29 @@ void keyReleased() {
         case RIGHT:
             movePressed[3] = false;
             break;
+        case SHIFT:
+            shiftDown = false;
+            break;
         }
     } else {
         switch(key) {
-        case 'w':
-        case 'W':
-            movePressed[0] = false;
-            break;
-        case 'a':
-        case 'A':
-            movePressed[1] = false;
-            break;
-        case 's':
-        case 'S':
-            movePressed[2] = false;
-            break;
-        case 'd':
-        case 'D':
-            movePressed[3] = false;
-            break;
+            //case 'w':
+            //case 'W':
+            //    movePressed[0] = false;
+            //    break;
+            //case 'a':
+            //case 'A':
+            //    movePressed[1] = false;
+            //    break;
+            //case 's':
+            //case 'S':
+            //    movePressed[2] = false;
+            //    break;
+            //case 'd':
+            //case 'D':
+            //    movePressed[3] = false;
+            //    break;
+            //}
         }
     }
 }

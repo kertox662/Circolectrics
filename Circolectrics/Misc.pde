@@ -70,9 +70,11 @@ PImage makeHighlight(PImage i){
 
 PImage switchColor(PImage i, color c){
     PImage img = i.copy();
+    color tp = color(0,0);
     img.loadPixels();
     for(int j = 0; j < img.pixels.length; j++){
         if(img.pixels[j] == color(0)) img.pixels[j] = c;
+        else img.pixels[j] = tp;
     }
     
     img.updatePixels();
@@ -92,4 +94,18 @@ void polygon(float x, float y, float radius, int npoints) {
     vertex(sx, sy);
   }
   endShape(CLOSE);
+}
+
+
+float getClosestSnappedAngle(PVector p1, PVector p2) {
+    float angle;
+    try {
+        angle = degrees(atan((p1.y - p2.y) / (p1.x - p2.x))); //Finds angle
+    } 
+    catch(ArithmeticException e) {
+        if (p1.y - p2.y > 0) angle = 90;
+        else angle = 270;
+    }
+    float a = radians(round(angle / snapAngle) * snapAngle); //Gets closest Angle to the angle to mouse
+    return a;
 }

@@ -211,7 +211,7 @@ class createTextDialogue {
         dialogueSurface.setTitle("Create Text");
 
         text.setText("Text");
-        size.setText("12");
+        size.setText("28");
 
         text.setVisible(true);
         size.setVisible(true);
@@ -402,11 +402,12 @@ class chooseComponentDialogue extends PApplet {
     }
 
     void setupWin() {
+        changeScale();
         surface.setVisible(true);
     }
 
     void cleanupWin() {
-        if (overButton() == 1) {
+        if (overButton() == 1 && focused) {
             Component c = masterComponents[chosenIndex].copy();
             c.img = masterComponents[chosenIndex].possibleImages[imageIndex].copy();
             curLayer.components.add(c);
@@ -436,7 +437,7 @@ class chooseComponentDialogue extends PApplet {
 //======================================================================================
 
 class layerOptionsDialogue {
-    GCheckbox check;
+    GCheckbox check, trackTop, tintComp;
     GTextField name;
     GButton accept, cancel;
     GLabel thickInfo;
@@ -445,10 +446,18 @@ class layerOptionsDialogue {
 
     layerOptionsDialogue() {
 
-        check = new GCheckbox(window, 5, 85, 120, 20);
+        check = new GCheckbox(window, 5, 85, 70, 20);
         check.setIconAlign(GAlign.LEFT, GAlign.MIDDLE);
         check.setText("Is Visible");
         check.setOpaque(true);
+        
+        trackTop = new GCheckbox(window, 80, 85, 125, 20);
+        trackTop.setText("Draw Tracks on top");
+        trackTop.setOpaque(true);
+        
+        tintComp = new GCheckbox(window, 5, 110, 110, 20);
+        tintComp.setText("Tint components");
+        tintComp.setOpaque(true);
 
         name = new GTextField(window, 5, 10, 150, 20);
         name.setText(layers.get(changeIndex).name);
@@ -460,23 +469,27 @@ class layerOptionsDialogue {
         thickness = new GTextField(window, 5, 60, 100, 20);
         thickness.setText("0");
 
-        accept = new GButton(window, 5, 110, 60, 20);
+        accept = new GButton(window, 5, 135, 60, 20);
         accept.setText("Accept");
         accept.addEventHandler(main, "submitLO");
 
-        cancel = new GButton(window, 70, 110, 60, 20);
+        cancel = new GButton(window, 70, 135, 60, 20);
         cancel.setText("Cancel");
         cancel.addEventHandler(main, "submitLO");
     }
 
     void setupWin() {
-        dialogueSurface.setSize(200, 135);
+        dialogueSurface.setSize(210, 160);
 
         if (isInManager())
             changeIndex = (height - 86 - mouseY + managerScrolled)/20;
         else
             changeIndex = layers.indexOf(curLayer);
+        
         check.setSelected(curLayer.isVisible);
+        trackTop.setSelected(curLayer.drawTracksOnTop);
+        tintComp.setSelected(curLayer.tintComponents);
+        
         name.setText(layers.get(lOptions.changeIndex).name);
         thickness.setText(str(layers.get(lOptions.changeIndex).defaultThickness));
 
@@ -486,6 +499,8 @@ class layerOptionsDialogue {
         cancel.setVisible(true);
         thickInfo.setVisible(true);
         thickness.setVisible(true);
+        trackTop.setVisible(true);
+        tintComp.setVisible(true);
     }
 
     void cleanupWin() {
@@ -495,6 +510,8 @@ class layerOptionsDialogue {
         cancel.setVisible(false);
         thickInfo.setVisible(false);
         thickness.setVisible(false);
+        trackTop.setVisible(false);
+        tintComp.setVisible(false);
         lOptions.changeIndex = -1;
     }
 }
@@ -505,6 +522,8 @@ void submitLO(GButton b, GEvent e) {
         Layer l = layers.get(lOptions.changeIndex);
         l.name = lOptions.name.getText();
         l.isVisible = lOptions.check.isSelected();
+        l.drawTracksOnTop = lOptions.trackTop.isSelected();
+        l.tintComponents = lOptions.tintComp.isSelected();
         float t = float(lOptions.thickness.getText());
         if (!Float.isNaN(t))
             l.setThickness(t);
@@ -554,8 +573,24 @@ class deleteLayerDialogue {
 void dlSubmit(GButton b, GEvent e) {
     if (b == dLayer.y) {
         int i = layers.indexOf(curLayer);
+        
+        for(int j = 0; j < curLayer.tracks.size(); j++){
+            LineSegment ls = curLayer.tracks.get(j);
+            selectedTrack.remove(ls);
+        }
+        for(int j = 0; j < curLayer.components.size(); j++){
+            Component c = curLayer.components.get(j);
+            selectedComponent.remove(c);
+        }
+        for(int j = 0; j < curLayer.texts.size(); j++){
+            Text t = curLayer.texts.get(j);
+            selectedText.remove(t);
+        }
+        
+        
         layers.remove(curLayer);
         curLayer = layers.get(min(i, layers.size() - 1 ));
+        
     }
 
     setDialogue(-1);
