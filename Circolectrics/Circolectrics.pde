@@ -9,8 +9,6 @@ import processing.awt.*; //To be able to cast PSurface to Frame to get the locat
 import java.awt.Frame;
 import java.lang.reflect.Field;
 
-import java.lang.System; //Nanotime, Temporary
-
 //============================================================================================================================================================================
 //============================================================================================================================================================================
 //============================================================================================================================================================================
@@ -40,7 +38,7 @@ PVector viewPortMax, viewPortMin; //viewPort corners relative to curView and vie
 //Tools
 PImage[] icons; //Tool icons appearing in toolbox (Left of screen)
 PImage highlightTool, selectedTool; //Showing hovering or selected tool (also used for other highlights)
-int[] iconOffset; //The offset for each tool. This will display the tool shifted over to this x coordinate (Center).
+float[] iconOffset; //The offset for each tool. This will display the tool shifted over to this x coordinate (Center).
 final int minIconOffset = -15, maxIconOffset = 37; //Offest values to target when going up or down
 int offsetIncSpeed = 6; //The rate at which offset values are increased or decreased
 
@@ -52,6 +50,7 @@ PVector selectBoxStart, selectBoxEnd;
 PVector snapPoint; //Global snapping point value
 int snapAngle = 30; //Angle to snap to when the angle snapping mode is "Angular"
 final int snapDist = 20; //Distance at which to initiate snap
+PVector alignedSnapPoint;
 
 //File Icons
 final int minFileOffset = -15; //Same thing as iconOffset with their min and max
@@ -89,7 +88,7 @@ void settings() {
 }
 
 void setup() {
-    frameRate(30);
+    //frameRate(30);
     
     surface.setResizable(true);
     surface.setTitle("Circolectrics");
@@ -104,6 +103,7 @@ void setup() {
     selectedTrack = null; 
     placingTrack = null;
     snapPoint = null;
+    alignedSnapPoint = null;
     layers.add(curLayer);
     
     
@@ -120,7 +120,7 @@ void setup() {
     AngleSnap.icons[1] = loadImage("Icons/Snap/Deg90Icon.png");
     AngleSnap.icons[2] = loadImage("Icons/Snap/AngleSnapIcon.png");
 
-    iconOffset = new int[Tool.toolName.length];
+    iconOffset = new float[Tool.toolName.length];
     for (int i = 0; i < iconOffset.length; i++) {
         iconOffset[i] = minIconOffset;
     }

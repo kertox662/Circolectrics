@@ -3,12 +3,12 @@ enum Tool {
         Component, 
         Text, 
         Select,
-        Rotate ,
-        Pan, 
+        Move,
+        Rotate,
         FitViewToBoard;
 
     static Tool curTool = Tool.Select;
-    static String[] toolName = {"Add Track", "Add Component", "Add Text", "Select", "Rotate", "Pan View", "Fit Board To View"};
+    static String[] toolName = {"Add Track", "Add Component", "Add Text", "Select",  "Move", "Rotate", "Fit View To Board"};
 }
 
 void changeTool(Tool t) {
@@ -22,6 +22,10 @@ void changeTool(Tool t) {
         }    
         Tool.curTool = t;
     }
+    
+    if(Tool.curTool != Tool.Select && Tool.curTool != Tool.Move && Tool.curTool != Tool.Rotate){
+      resetSelected();
+    }
 }
 
 void resetActions() {
@@ -34,7 +38,7 @@ void resetActions() {
     }
     if (t != Tool.Select) {
     }
-    if (t != Tool.Pan) {
+    if (t != Tool.Move) {
     }
     if (t != Tool.FitViewToBoard) {
     }
@@ -48,8 +52,8 @@ PImage[] loadToolIcons() {
     imgs[1] = loadImage("Icons/Tools/ComponentIcon.png");
     imgs[2] = loadImage("Icons/Tools/TextIcon.png");
     imgs[3] = loadImage("Icons/Tools/SelectIcon.png");
-    imgs[4] = loadImage("Icons/Tools/RotateIcon.png");
-    imgs[5] = loadImage("Icons/Tools/PanIcon.png");
+    imgs[4] = loadImage("Icons/Tools/PanIcon.png");
+    imgs[5] = loadImage("Icons/Tools/RotateIcon.png");
     imgs[6] = loadImage("Icons/Tools/BoardViewIcon.png");
     
 
@@ -87,4 +91,10 @@ void resetText() {
     editText = null;
     cText.cleanupWin();
     window.setVisible(false);
+}
+
+void resetSelected(){
+  selectedTrack.clear();
+  selectedComponent.clear();
+  selectedText.clear();
 }

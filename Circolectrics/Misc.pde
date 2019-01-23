@@ -1,27 +1,28 @@
 PVector vCopy(PVector p) {
-    return p.copy();
+  return p.copy();
 }
 
 float distSqr(PVector a, PVector b) {
-    return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+  return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
 }
 
 float dist(PVector a, PVector b) {
-    return dist(a.x, a.y, b.x, b.y);
+  return dist(a.x, a.y, b.x, b.y);
 }
 
 
 void point(PVector a) {
-    point( a.x, a.y);
+  point( a.x, a.y);
 }
 
 void resetView() {
-    curView.set(0, 0);
-    viewScale = 1;
+  curView.set(0, 0);
+  viewScale = 1;
 }
 
 void line(PVector a, PVector b) {
-    line( a.x, a.y, b.x, b.y);
+  if(a == null || b == null) return;
+  line( a.x, a.y, b.x, b.y);
 }
 
 static final javax.swing.JFrame getJFrame(final PSurface surf) {
@@ -32,10 +33,10 @@ static final javax.swing.JFrame getJFrame(final PSurface surf) {
 }
 
 float roundAny(float x, int d) {
-    x *= pow(10, d);
-    x = round(x);
-    x /= pow(10, d);
-    return x;
+  x *= pow(10, d);
+  x = round(x);
+  x /= pow(10, d);
+  return x;
 }
 
 Frame getFrame(PSurface surface) {
@@ -54,35 +55,35 @@ Frame getFrame(PSurface surface) {
 //int getColor(){}
 
 //color hsbToRGB(long x){
-    
+
 //}
 
-PImage makeHighlight(PImage i){
-    PImage img = i.copy();
-    img.loadPixels();
-    for(int j = 0; j < img.pixels.length; j++){
-        if(img.pixels[j] != 0) img.pixels[j] = color(255);
-    }
-    
-    img.updatePixels();
-    return img;
+PImage makeHighlight(PImage i) {
+  PImage img = i.copy();
+  img.loadPixels();
+  for (int j = 0; j < img.pixels.length; j++) {
+    if (img.pixels[j] != 0) img.pixels[j] = color(255);
+  }
+
+  img.updatePixels();
+  return img;
 }
 
-PImage switchColor(PImage i, color c){
-    PImage img = i.copy();
-    color tp = color(0,0);
-    img.loadPixels();
-    for(int j = 0; j < img.pixels.length; j++){
-        if(img.pixels[j] == color(0)) img.pixels[j] = c;
-        else img.pixels[j] = tp;
-    }
-    
-    img.updatePixels();
-    return img;
+PImage switchColor(PImage i, color c) {
+  PImage img = i.copy();
+  color tp = color(0, 0);
+  img.loadPixels();
+  for (int j = 0; j < img.pixels.length; j++) {
+    if (img.pixels[j] == color(0)) img.pixels[j] = c;
+    else img.pixels[j] = tp;
+  }
+
+  img.updatePixels();
+  return img;
 }
 
-PVector getRelativeMouse(){
-    return new PVector((mouseX - curView.x)/viewScale, (mouseY - curView.y) / viewScale);
+PVector getRelativeMouse() {
+  return new PVector((mouseX - curView.x)/viewScale, (mouseY - curView.y) / viewScale);
 }
 
 void polygon(float x, float y, float radius, int npoints) {
@@ -98,14 +99,14 @@ void polygon(float x, float y, float radius, int npoints) {
 
 
 float getClosestSnappedAngle(PVector p1, PVector p2) {
-    float angle;
-    try {
-        angle = degrees(atan((p1.y - p2.y) / (p1.x - p2.x))); //Finds angle
-    } 
-    catch(ArithmeticException e) {
-        if (p1.y - p2.y > 0) angle = 90;
-        else angle = 270;
-    }
-    float a = radians(round(angle / snapAngle) * snapAngle); //Gets closest Angle to the angle to mouse
-    return a;
+  float angle;
+  try {
+    angle = degrees(atan((p1.y - p2.y) / (p1.x - p2.x))); //Finds angle
+  } 
+  catch(ArithmeticException e) {
+    if (p1.y - p2.y > 0) angle = 90;
+    else angle = 270;
+  }
+  float a = radians(round(angle / snapAngle) * snapAngle); //Gets closest Angle to the angle to mouse
+  return a;
 }

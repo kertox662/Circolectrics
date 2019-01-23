@@ -124,7 +124,6 @@ class Component {
     
     boolean isInsideImage(PVector m){
         float iW = img.width, iH = img.height;
-        float c = cos(rotation), s = sin(rotation);
         float cr = cos(-rotation), sr = sin(-rotation);
         
         m.x -= loc.x;

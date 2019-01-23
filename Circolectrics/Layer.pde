@@ -10,6 +10,7 @@ class Layer {
     boolean isVisible = true;
     boolean drawTracksOnTop = false;
     boolean tintComponents = true;
+    boolean showElements = true;
 
     int padShape = 8, padSize = 72;
 
