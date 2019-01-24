@@ -2,9 +2,11 @@ class LineSegment {
     PVector[] points;
     float slope;
     float thickness;
+    PVector[] revPoints;
 
     LineSegment(PVector a, PVector b, float t) {
         points = new PVector[]{a, b};
+        revPoints = new PVector[2];
         slope = (b.y - a.y) / (b.x - a.x);
         if (slope == Float.NEGATIVE_INFINITY)
             slope = Float.POSITIVE_INFINITY;
@@ -63,7 +65,7 @@ class LineSegment {
         }
     }
 
-    PVector intersect(PVector p) {
+    PVector instersectPoint(PVector p) {
         float l2 = distSqr(points[0], points[1]);
         float t = ( (p.x - points[0].x) * (points[1].x - points[0].x)  +  (p.y - points[0].y) * (points[1].y - points[0].y) )/l2;
         t = max(0, min(1, t));
@@ -72,6 +74,21 @@ class LineSegment {
             points[0].y + t * (points[1].y - points[0].y)
             );
         return p2;
+    }
+    
+    boolean areSegmentsIntersecting(LineSegment ls){
+        PVector p1 = points[0], q1 = points[1];
+        PVector p2 = ls.points[0], q2 = ls.points[1];
+        
+        int[] orients = new int[4];
+        orients[0] = getOrientation(p1,q1,p2);
+        orients[1] = getOrientation(p1,q1,q2);
+        orients[2] = getOrientation(p2,q2,p1);
+        orients[3] = getOrientation(p2,q2,q1);
+        if(orients[0] != orients[1] && orients[2] != orients[3])
+            return true;
+        
+        return false;
     }
 
 
@@ -99,4 +116,6 @@ class LineSegment {
         
         return false;
     }
+    
+    
 }

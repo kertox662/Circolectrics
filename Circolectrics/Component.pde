@@ -1,12 +1,13 @@
 class Component {
     String name, officialName;
     PVector[] basePoints; //Where to draw pads as well as snapping points. The first element of the array is the one by which the component will be placed.
-    PVector loc; //Where the center of the component is located. Also where the image will be centered around.
+    PVector loc, revLoc; //Where the center of the component is located. Also where the image will be centered around.
     PImage img, imgTinted; //img is black, imgTinted is the component's layer's color;
+    int imgInd = 0;
     float rotation;
     int w, h; //Width and Height
 
-    PVector c1, c2, c3, c4,c5;
+    PVector c1, c2, c3, c4, c5;
 
     color tinted;
     String defaultImage; //Path to default image
@@ -45,7 +46,7 @@ class Component {
             imgTinted = switchColor(img, c);
             tinted  = c;
         }
-        if(b)
+        if (b)
             image(imgTinted, 0, 0);
         else
             image(img, 0, 0);
@@ -57,7 +58,22 @@ class Component {
             polygon(p.x, p.y, (i == 1 && basePoints.length > 3)? 36*sqrt(2):36, ((i == 1 && basePoints.length > 3)? 4:8));
             fill(255);
             ellipse(p.x, p.y, 36, 36);
-            
+        }
+        popMatrix();
+    }
+    
+    void displayPads(color c, boolean b){
+        pushMatrix();
+        translate(loc.x, loc.y);
+        rotate(rotation);
+        for (int i = 1; i < basePoints.length; i++) {
+            PVector p = basePoints[i];
+            fill(c);
+            stroke(0);
+            strokeWeight(2);
+            polygon(p.x, p.y, (i == 1 && basePoints.length > 3)? 36*sqrt(2):36, ((i == 1 && basePoints.length > 3)? 4:8));
+            fill(0);
+            ellipse(p.x, p.y, 36, 36);
         }
         popMatrix();
     }
@@ -121,30 +137,42 @@ class Component {
         PImage temp = loadImage(s);
         if (temp != null) img = temp;
     }
-    
-    boolean isInsideImage(PVector m){
+
+    boolean isInsideImage(PVector m) {
         float iW = img.width, iH = img.height;
         float cr = cos(-rotation), sr = sin(-rotation);
-        
+
         m.x -= loc.x;
         m.y -= loc.y;
-        
+
         PVector mouseRot = new PVector((m.x*cr - m.y*sr) + loc.x, (m.x*sr + m.y*cr) + loc.y);
-        
+
         m.x += loc.x;
         m.y += loc.y;
-        
-        if(mouseRot.x >= loc.x - iW/2 && mouseRot.x <= loc.x + iW/2)
-            if(mouseRot.y >= loc.y - iH/2 && mouseRot.y <= loc.y + iH/2)
+
+        if (mouseRot.x >= loc.x - iW/2 && mouseRot.x <= loc.x + iW/2)
+            if (mouseRot.y >= loc.y - iH/2 && mouseRot.y <= loc.y + iH/2)
                 return true;
-        
+
         return false;
     }
-    
-    boolean shouldSelect(){
-        
-        
-        return true;
+
+    boolean isInRect(float xMin, float xMax, float yMin, float yMax) {
+        float c = cos(rotation), s = sin(rotation);
+
+        if (loc.x >= xMin && loc.x <= xMax)
+            if (loc.y >= yMin && loc.y <= yMax) {
+                return true;
+            }
+
+        for (PVector p : basePoints) {
+            PVector p2 = new PVector((p.x*c - p.y*s) + loc.x, (p.x*s + p.y*c) + loc.y);
+            if (p2.x >= xMin && p2.x <= xMax)
+                if (p2.y >= yMin && p2.y <= yMax) {
+                    return true;
+                }
+        }
+        return false;
     }
 }
 
@@ -164,7 +192,6 @@ Component loadComponent(String path) { //Loads the component from specified file
         int y = int(parts[5 + i].split(",")[1]);
         c.basePoints[i] = new PVector(x, y);
     }
-    //println(c.name, parts.length - (i + 4));
     c.possibleImages = new PImage[parts.length - (i + 4)];
     c.possibleImages[0] = loadImage(c.defaultImage);
     c.imageNames = new String[c.possibleImages.length];

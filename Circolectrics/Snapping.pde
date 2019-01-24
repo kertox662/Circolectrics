@@ -36,7 +36,7 @@ PVector findSnapPoint(PVector p) {
             float d = ls.distToLine(mouse);
             if (d <= snapDist && d <= smallestDist) {
               smallestDist = d;
-              ps = ls.intersect(mouse);
+              ps = ls.instersectPoint(mouse);
             }
           }
         }
@@ -100,7 +100,7 @@ PVector findSnapPoint(PVector p) {
         for (int j = 0; j < l.tracks.size(); j++) {
           LineSegment ls = l.tracks.get(j);
           if (ls == placingTrack) continue;
-          PVector toTest = ls.intersect(p);
+          PVector toTest = ls.instersectPoint(p);
           float d = dist(p, toTest);
           float dl = ls.distToLine(mouse);
           if (dl <= snapDist && dl <= smallestDist) {
@@ -159,6 +159,9 @@ PVector findSnapPoint(PVector p) {
       }
     }
   }
-
+  if(ps != null)
+      if(Float.isNaN(ps.x) || Float.isNaN(ps.y))
+          return null;
+  
   return ps;
 }

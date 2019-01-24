@@ -10,7 +10,7 @@ class Layer {
     boolean isVisible = true;
     boolean drawTracksOnTop = false;
     boolean tintComponents = true;
-    boolean showElements = true;
+    //boolean showElements = false;
 
     int padShape = 8, padSize = 72;
 
@@ -73,6 +73,21 @@ class Layer {
             }
         }
     }
+    
+    void drawTracks(boolean b) {
+        for (int i = 0; i < tracks.size(); i++) {
+            try {
+                LineSegment ls = tracks.get(i);
+                //if(selectedTrack.contains(ls)) 
+                //    stroke(255);
+                //else
+                stroke(color(255));
+                ls.display();
+            } 
+            catch(IndexOutOfBoundsException e) {
+            }
+        }
+    }
 
     void drawComponents() {
         for (int i = 0; i < components.size(); i++) {
@@ -84,10 +99,30 @@ class Layer {
         }
     }
 
+    void drawComponents(boolean b) {
+        for (int i = 0; i < components.size(); i++) {
+            try {
+                components.get(i).displayPads(color(255), true);
+            } 
+            catch(IndexOutOfBoundsException e) {
+            }
+        }
+    }
+
     void drawTexts() {
         for (int i = 0; i < texts.size(); i++) {
             try {
                 texts.get(i).display(ccD.colors[colorIndex]);
+            } 
+            catch(IndexOutOfBoundsException e) {
+            }
+        }
+    }
+    
+    void drawTexts(boolean b) {
+        for (int i = 0; i < texts.size(); i++) {
+            try {
+                texts.get(i).display(color(255));
             } 
             catch(IndexOutOfBoundsException e) {
             }

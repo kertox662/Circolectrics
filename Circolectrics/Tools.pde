@@ -23,7 +23,7 @@ void changeTool(Tool t) {
         Tool.curTool = t;
     }
     
-    if(Tool.curTool != Tool.Select && Tool.curTool != Tool.Move && Tool.curTool != Tool.Rotate){
+    if(Tool.curTool != Tool.Move && Tool.curTool != Tool.Rotate){
       resetSelected();
     }
 }

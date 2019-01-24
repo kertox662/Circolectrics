@@ -1,7 +1,7 @@
 class Text{
     String text;
     int fontSize;
-    PVector base;
+    PVector base, revBase;
     int c;
 
     Text(String t, int fs, PVector b){

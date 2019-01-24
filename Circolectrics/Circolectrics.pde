@@ -16,7 +16,8 @@ import java.lang.reflect.Field;
 //Edit Fields
 LineSegment placingTrack; //Objects that hold temporary access to linesegment objects that are currently being edited
 Text placingText, editText; //Same as tracks, but for text
-Component placingComponent, editComponent;//Same as tracks, but for components
+Component placingComponent, editComponent, editComponentBackup;//Same as tracks, but for components
+PVector movingBase = null;
 
 ArrayList<LineSegment> selectedTrack;
 ArrayList<Component> selectedComponent;
@@ -42,6 +43,9 @@ float[] iconOffset; //The offset for each tool. This will display the tool shift
 final int minIconOffset = -15, maxIconOffset = 37; //Offest values to target when going up or down
 int offsetIncSpeed = 6; //The rate at which offset values are increased or decreased
 
+
+PImage settingsIcon;
+
 //Selection
 PVector selectBoxStart, selectBoxEnd;
 
@@ -49,7 +53,7 @@ PVector selectBoxStart, selectBoxEnd;
 //Snapping
 PVector snapPoint; //Global snapping point value
 int snapAngle = 30; //Angle to snap to when the angle snapping mode is "Angular"
-final int snapDist = 20; //Distance at which to initiate snap
+int snapDist = 20; //Distance at which to initiate snap
 PVector alignedSnapPoint;
 
 //File Icons
@@ -66,6 +70,7 @@ chooseComponentDialogue cComp;
 layerOptionsDialogue lOptions;
 deleteLayerDialogue dLayer;
 chooseColorDialogue ccD;
+settingsDialogue sD;
 
 //Layer Manager
 int managerScrolled = 0; //Amount by which to offset the layer manager. Updates when scrolled in the manager
@@ -77,7 +82,8 @@ Component[] masterComponents; //Components that will be loaded in and copied whe
 boolean showOfficialNames = false; //Instead of the names given by the program, uses official names. (EG. SIP 3 instead of Three Pad)
 
 //Misc
-boolean doFullScreen = true; //Not yet implemented
+boolean fileReady = false;
+boolean appReadyForFile = false;
 
 //============================================================================================================================================================================
 //============================================================================================================================================================================
@@ -89,7 +95,7 @@ void settings() {
 
 void setup() {
     //frameRate(30);
-    
+
     surface.setResizable(true);
     surface.setTitle("Circolectrics");
     G4P.messagesEnabled(false);
@@ -105,8 +111,8 @@ void setup() {
     snapPoint = null;
     alignedSnapPoint = null;
     layers.add(curLayer);
-    
-    
+
+
     masterComponents = loadMaster();
     //=====================================
     //============LOAD ICONS===============
@@ -119,24 +125,26 @@ void setup() {
     AngleSnap.icons[0] = loadImage("Icons/Snap/NoAngleSnapIcon.png");
     AngleSnap.icons[1] = loadImage("Icons/Snap/Deg90Icon.png");
     AngleSnap.icons[2] = loadImage("Icons/Snap/AngleSnapIcon.png");
+    
+    settingsIcon = loadImage("Icons/Misc/SettingsIcon.png");
 
     iconOffset = new float[Tool.toolName.length];
     for (int i = 0; i < iconOffset.length; i++) {
         iconOffset[i] = minIconOffset;
     }
 
-    fileIcons = new PImage[]{loadImage("Icons/File/NewFileIcon.png"), loadImage("Icons/File/OpenIcon2.png"), loadImage("Icons/File/SaveIcon.png")};
-    fileIconLoc = new PVector[]{new PVector(width - 160, minFileOffset), new PVector(width - 100, minFileOffset), new PVector(width - 40, minFileOffset)};
+    fileIcons = new PImage[]{ loadImage("Icons/File/PrintIcon.png"), loadImage("Icons/File/NewFileIcon.png"), loadImage("Icons/File/OpenIcon2.png"), loadImage("Icons/File/SaveIcon.png")};
+    fileIconLoc = new PVector[]{new PVector(width - 220, minFileOffset), new PVector(width - 160, minFileOffset), new PVector(width - 100, minFileOffset), new PVector(width - 40, minFileOffset)};
 
     visibleIcon = loadImage("Icons/Material/Visible.png");
     visibleIcon.resize(18, 18);
     invisibleIcon = loadImage("Icons/Material/Invisible.png");
     invisibleIcon.resize(18, 18);
-    
+
     NLIcon = loadImage("Icons/Layer/NewLayer.png");
     ELIcon = loadImage("Icons/Layer/EditLayer.png");
     DLIcon = loadImage("Icons/Layer/DeleteLayer.png");
-    
+
     NLHighlight = makeHighlight(NLIcon);
     ELHighlight = makeHighlight(ELIcon);
     DLHighlight = makeHighlight(DLIcon);
@@ -146,7 +154,7 @@ void setup() {
     //=====================================
 
     surface.setAlwaysOnTop(true);
-    window = GWindow.getWindow(this, "Dialogue", width/2, height/2, 100,100,JAVA2D);
+    window = GWindow.getWindow(this, "Dialogue", width/2, height/2, 100, 100, JAVA2D);
     window.setActionOnClose(G4P.KEEP_OPEN);
     nfWin = new newFileDialogue();
     cText = new createTextDialogue();
@@ -154,31 +162,37 @@ void setup() {
     dLayer = new deleteLayerDialogue();
     ccD = new chooseColorDialogue();
     cComp = new chooseComponentDialogue();
+    sD = new settingsDialogue();
     window.setVisible(false);
     surface.setAlwaysOnTop(false);
     dialogueSurface = window.getSurface();
     setDialogue(-1);
-    
+
     //=====================================
     //============Miscellaneous============
     //=====================================
     selectedTrack = new ArrayList<LineSegment>();
     selectedComponent = new ArrayList<Component>();
     selectedText = new ArrayList<Text>();
-    
+
     imageMode(CENTER);
-    textAlign(CENTER,CENTER);
+    textAlign(CENTER, CENTER);
     blendMode(REPLACE);
-    
-    
-    
+
+
+
     surface.setIcon(loadImage("Icons/Tools/TrackIcon.png"));
 }
 
 void draw() {
-    background(200);
-    updateApp();
-    drawApp();
+    //if(!fileReady)
+        background(200);
+        updateApp();
+        drawApp();
+        appReadyForFile = false;
+    
+    //if(fileReady)
+    //    appReadyForFile = true;
 }
 
 void updateApp() { //Updates the app values
@@ -192,23 +206,30 @@ void updateApp() { //Updates the app values
         changeTool(Tool.Select);
     }
     
+    if(selectBoxStart != null && selectBoxEnd != null)
+        findElementsInSelectBox();
+    
+    updateMovement();
+    updateMoveSnap();
 }
 
 void drawApp() { //Draws the elements of the app
     //Viewport Stuff
     pushMatrix();
-        translate(curView.x, curView.y);
-        scale(viewScale);
-        drawReferencePoints();
-        drawLayers();
-        drawSelected();
-        if (snapPoint != null)
-            drawSnapPoint(snapPoint);
-        drawSelectBox();
+    translate(curView.x, curView.y);
+    scale(viewScale);
+    drawReferencePoints();
+    drawLayers();
+    drawSelected();
+    if (snapPoint != null) {
+        drawSnapPoint(snapPoint);
+    }
+    drawSelectBox();
     popMatrix();
     //UI Stuff
     drawLayerManager();
     drawIcons();
+    drawSettings();
     drawFileIcon();
     drawSnap();
     drawInfo();

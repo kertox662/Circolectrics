@@ -22,6 +22,9 @@ void setDialogue(int x) {
     if (x != 5) { 
         ccD.getSurface().setVisible(false);
     }
+    if (x != 6) {
+        sD.cleanupWin();
+    }
     if (x == -1) { 
         window.setVisible(false);
         return;
@@ -44,6 +47,8 @@ void setDialogue(int x) {
         else ccD.setVisible(true);
         ccD.changeIndex = min((height - 86 - mouseY + managerScrolled)/20, layers.size() - 1 );
         return;
+    } else if (x == 6) {
+        sD.setupWin();
     }
 
     window.setVisible(true);
@@ -210,8 +215,8 @@ class createTextDialogue {
         dialogueSurface.setSize(200, 100);
         dialogueSurface.setTitle("Create Text");
 
-        text.setText("Text");
-        size.setText("28");
+        text.setText(editText.text);
+        size.setText(str(editText.fontSize));
 
         text.setVisible(true);
         size.setVisible(true);
@@ -247,7 +252,6 @@ void updateEditTextC(GTextField s, GEvent e) {
 void updateEditSizeC(GTextField s, GEvent e) {
     float size = float(s.getText());
     if (!Float.isNaN(size))
-        println(size);
     editText.setSize(int(size));
 }
 
@@ -279,22 +283,22 @@ class chooseComponentDialogue extends PApplet {
 
     void draw() {
         //if (focused == true) {
-            background(210);
-            strokeWeight(2);
-            stroke(0);
-            fill((overButton() == 1)?color(100, 200, 100):255);
-            rect(20, 570, 70, 20);
-            fill((overButton() == 2)?color(100, 200, 100):255);
-            rect(100, 570, 70, 20);
-            drawBoxes();
-            drawComponentNames();
-            drawImageNames();
-            previewComp();
+        background(210);
+        strokeWeight(2);
+        stroke(0);
+        fill((overButton() == 1)?color(100, 200, 100):255);
+        rect(20, 570, 70, 20);
+        fill((overButton() == 2)?color(100, 200, 100):255);
+        rect(100, 570, 70, 20);
+        drawBoxes();
+        drawComponentNames();
+        drawImageNames();
+        previewComp();
 
-            textAlign(CENTER);
-            fill(0);
-            text("Accept", 20, 572, 70, 20);
-            text("Cancel", 100, 572, 70, 20);
+        textAlign(CENTER);
+        fill(0);
+        text("Accept", 20, 572, 70, 20);
+        text("Cancel", 100, 572, 70, 20);
         //} else{
         //    setVisible(false);
         //}
@@ -311,7 +315,7 @@ class chooseComponentDialogue extends PApplet {
             fill(0);
             stroke(0);
             text("COMPONENT TYPE", 10, 22);
-            text(masterComponents[i].name, 10, 42 + i*20);
+            text((showOfficialNames)?masterComponents[i].officialName:masterComponents[i].name, 10, 42 + i*20);
         }
     }
 
@@ -409,10 +413,25 @@ class chooseComponentDialogue extends PApplet {
     void cleanupWin() {
         if (overButton() == 1 && focused) {
             Component c = masterComponents[chosenIndex].copy();
-            c.img = masterComponents[chosenIndex].possibleImages[imageIndex].copy();
-            curLayer.components.add(c);
-            placingComponent = c;
+            c.img = masterComponents[chosenIndex].possibleImages[imageIndex];
+            c.imgInd = imageIndex;
+            if (editComponent == null) {
+                curLayer.components.add(c);
+                placingComponent = c;
+            } else {
+                c.loc = editComponent.loc.copy();
+                for (int i = 0; i < layers.size(); i++) {
+                    Layer l = layers.get(i);
+                    if (l.components.contains(editComponent)) {
+                        l.components.remove(editComponent);
+                        l.components.add(c);
+                    }
+                }
+                selectedComponent.remove(editComponent);
+                
+            }
         }
+        editComponent = null;
         surface.setVisible(false);
         chosenIndex = 0;
     }
@@ -450,11 +469,11 @@ class layerOptionsDialogue {
         check.setIconAlign(GAlign.LEFT, GAlign.MIDDLE);
         check.setText("Is Visible");
         check.setOpaque(true);
-        
+
         trackTop = new GCheckbox(window, 80, 85, 125, 20);
         trackTop.setText("Draw Tracks on top");
         trackTop.setOpaque(true);
-        
+
         tintComp = new GCheckbox(window, 5, 110, 110, 20);
         tintComp.setText("Tint components");
         tintComp.setOpaque(true);
@@ -485,13 +504,13 @@ class layerOptionsDialogue {
             changeIndex = (height - 86 - mouseY + managerScrolled)/20;
         else
             changeIndex = layers.indexOf(curLayer);
-        
+
         check.setSelected(curLayer.isVisible);
         trackTop.setSelected(curLayer.drawTracksOnTop);
         tintComp.setSelected(curLayer.tintComponents);
-        
-        name.setText(layers.get(lOptions.changeIndex).name);
-        thickness.setText(str(layers.get(lOptions.changeIndex).defaultThickness));
+
+        name.setText(layers.get(min(lOptions.changeIndex, layers.size() - 1)).name);
+        thickness.setText(str(layers.get(min(lOptions.changeIndex, layers.size() - 1)).defaultThickness));
 
         check.setVisible(true);
         name.setVisible(true);
@@ -517,7 +536,6 @@ class layerOptionsDialogue {
 }
 
 void submitLO(GButton b, GEvent e) {
-    println("HERE");
     if (b == lOptions.accept) {
         Layer l = layers.get(lOptions.changeIndex);
         l.name = lOptions.name.getText();
@@ -573,24 +591,23 @@ class deleteLayerDialogue {
 void dlSubmit(GButton b, GEvent e) {
     if (b == dLayer.y) {
         int i = layers.indexOf(curLayer);
-        
-        for(int j = 0; j < curLayer.tracks.size(); j++){
+
+        for (int j = 0; j < curLayer.tracks.size(); j++) {
             LineSegment ls = curLayer.tracks.get(j);
             selectedTrack.remove(ls);
         }
-        for(int j = 0; j < curLayer.components.size(); j++){
+        for (int j = 0; j < curLayer.components.size(); j++) {
             Component c = curLayer.components.get(j);
             selectedComponent.remove(c);
         }
-        for(int j = 0; j < curLayer.texts.size(); j++){
+        for (int j = 0; j < curLayer.texts.size(); j++) {
             Text t = curLayer.texts.get(j);
             selectedText.remove(t);
         }
-        
-        
+
+
         layers.remove(curLayer);
         curLayer = layers.get(min(i, layers.size() - 1 ));
-        
     }
 
     setDialogue(-1);
@@ -729,5 +746,117 @@ class chooseColorDialogue extends PApplet {
         if (mouseX >= 20 && mouseX <= 90) if (mouseY >= 170 && mouseY <= 190) return 1;
         if (mouseX >= 100 && mouseX <= 170) if (mouseY >= 170 && mouseY <= 190) return 2;
         return 0;
+    }
+}
+
+//======================================================================================
+//======================================================================================
+//======================================================================================
+
+class settingsDialogue {
+    GTextField snapDistEntry, snapAngleEntry;
+    GLabel snapDistLabel, snapAngleLabel, nameLabel, Title;
+    GButton accept, cancel;
+    GCheckbox names1, names2;
+
+    File initFile;
+
+    settingsDialogue() {
+        names1 = new GCheckbox(window, 5, 75, 130, 40);
+        names1.setIconAlign(GAlign.LEFT, GAlign.MIDDLE);
+        names1.setText("Use Circolectric Names");
+        names1.setOpaque(true);
+        names1.addEventHandler(main, "toggleNaming");
+
+        names2 = new GCheckbox(window, 140, 75, 130, 40);
+        names2.setIconAlign(GAlign.LEFT, GAlign.MIDDLE);
+        names2.setText("Use Official Names");
+        names2.setOpaque(true);
+        names2.addEventHandler(main, "toggleNaming");
+
+        nameLabel = new GLabel(window, 5, 40, 80, 30);
+        nameLabel.setTextAlign(GAlign.CENTER, GAlign.MIDDLE);
+        nameLabel.setText("Component Naming");
+        nameLabel.setOpaque(true);
+
+        Title = new GLabel(window, 120, 5, 80, 20);
+        Title.setTextAlign(GAlign.CENTER, GAlign.MIDDLE);
+        Title.setText("Settings");
+        Title.setOpaque(true);
+
+        snapDistLabel = new GLabel(window, 5, 120, 150, 30);
+        snapDistLabel.setTextAlign(GAlign.CENTER, GAlign.MIDDLE);
+        snapDistLabel.setText("Snap Sensitivity (Pixels)");
+        snapDistLabel.setOpaque(true);
+
+        snapDistEntry = new GTextField(window, 5, 155, 80, 20, G4P.SCROLLBARS_NONE);
+
+        snapAngleLabel = new GLabel(window, 160, 120, 135, 30);
+        snapAngleLabel.setTextAlign(GAlign.CENTER, GAlign.MIDDLE);
+        snapAngleLabel.setText("Snap Angle (Degrees)");
+        snapAngleLabel.setOpaque(true);
+
+        snapAngleEntry = new GTextField(window, 160, 155, 80, 20, G4P.SCROLLBARS_NONE);
+
+        accept = new GButton(window, 5, 180, 50, 20);
+        accept.setText("Accept");
+        accept.addEventHandler(main, "submitSettings");
+
+        cancel = new GButton(window, 65, 180, 50, 20);
+        cancel.setText("Cancel");
+        cancel.addEventHandler(main, "submitSettings");
+    }
+
+    void setupWin() {
+        dialogueSurface.setSize(300, 210);
+        dialogueSurface.setTitle("Settings");
+
+        names1.setSelected(!showOfficialNames);
+        names2.setSelected(showOfficialNames);
+        snapDistEntry.setText(str(snapDist));
+        snapAngleEntry.setText(str(snapAngle));
+
+        names1.setVisible(true);
+        names2.setVisible(true);
+        snapDistEntry.setVisible(true);
+        snapDistLabel.setVisible(true);
+        snapAngleEntry.setVisible(true);
+        snapAngleLabel.setVisible(true);
+        Title.setVisible(true);
+        nameLabel.setVisible(true);
+        accept.setVisible(true);
+        cancel.setVisible(true);
+    }
+
+    void cleanupWin() {
+        names1.setVisible(false);
+        names2.setVisible(false);
+        snapDistEntry.setVisible(false);
+        snapDistLabel.setVisible(false);
+        snapAngleEntry.setVisible(false);
+        snapAngleLabel.setVisible(false);
+        Title.setVisible(false);
+        nameLabel.setVisible(false);
+        accept.setVisible(false);
+        cancel.setVisible(false);
+    }
+}
+
+void submitSettings(GButton b, GEvent e) {
+    if (b == sD.accept) {
+        showOfficialNames = sD.names2.isSelected();
+        float temp = float(sD.snapDistEntry.getText());
+        if (!Float.isNaN(temp)) snapDist = int(temp);
+        temp = float(sD.snapAngleEntry.getText());
+        if (!Float.isNaN(temp)) snapAngle = int(temp);
+    }
+    setDialogue(-1);
+}
+
+void toggleNaming(GCheckbox cb, GEvent e) {
+    if (cb == sD.names1) {
+        sD.names2.setSelected(!sD.names1.isSelected());
+    } else {
+        sD.names1.setSelected(!sD.names2.isSelected());
     }
 }

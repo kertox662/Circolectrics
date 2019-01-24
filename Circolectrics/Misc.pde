@@ -110,3 +110,10 @@ float getClosestSnappedAngle(PVector p1, PVector p2) {
   float a = radians(round(angle / snapAngle) * snapAngle); //Gets closest Angle to the angle to mouse
   return a;
 }
+
+int getOrientation(PVector a, PVector b, PVector c) { //Returns the orientation of two lines with the same middle point based on slope
+    float slopeDif = (b.y - a.y) * (c.x - b.x)    -     (b.x - a.x) * (c.y - b.y);
+    if (slopeDif == 0)
+        return 0; //Co-linear
+    return (slopeDif > 0)? 1:-1; //1 = clockwise angle, -1 = counter-clockwise angle
+}
